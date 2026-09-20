@@ -194,7 +194,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     if (frozen) {
       endgameStatus = (shootingOut ? "frozen, shooting - " : "frozen - ") + standing;
       if (!shootingOut) {
-        follower.setTeleOpDrive(0, 0, 0);
+      follower.setTeleOpDrive(0, 0, 0, false);
       }
     }
   }
@@ -207,7 +207,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     robot.shotController.stopShot();
     intake.stop();
     turret.setAimMode(Turret.AimMode.IDLE);
-    follower.breakFollowing();
+    follower.breakFollower();
 
     Pose here = follower.getPose();
     EndgameSpot spot = sentinel.nearestEndgameSpot(here, endgame().exit_clearance);
@@ -237,7 +237,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     Scheduler.reset();
     intake.stop();
     robot.shotController.stopShot();
-    follower.breakFollowing();
+    follower.breakFollower();
 
     shootingOut = standing == Sentinel.ZoneStanding.INSIDE;
     if (shootingOut) {
@@ -247,8 +247,8 @@ public abstract class AllianceAutoBase<T> extends OpMode {
 
     shooter.setTargetPower(0);
     turret.setAimMode(Turret.AimMode.IDLE);
-    follower.startTeleopDrive();
-    follower.setTeleOpDrive(0, 0, 0);
+    follower.startTeleOpDrive();
+    follower.setTeleOpDrive(0, 0, 0, false);
   }
 
   private void addShooterDiagnostics() {

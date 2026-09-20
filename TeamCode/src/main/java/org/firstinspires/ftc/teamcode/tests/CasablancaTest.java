@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import java.util.List;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.records.Field;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
@@ -65,7 +64,7 @@ public class CasablancaTest extends OpMode {
     }
 
     // Build Pedro Pathing Follower with starting pose matching LocalizationTest
-    follower = Constants.createFollower(hardwareMap);
+    follower = new Follower(hardwareMap);
     follower.setStartingPose(startPose);
 
     goalX = Field.getBlueGoalX();

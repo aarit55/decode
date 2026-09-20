@@ -18,6 +18,7 @@ import org.firstinspires.ftc.teamcode.robot.config.generated.config;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 
 public class VisionUtil {
 
@@ -71,12 +72,15 @@ public class VisionUtil {
 
     Pose newPose = null;
     for (AprilTagDetection detection : currentDetections) {
-      if (detection != null && detection.metadata != null && detection.robotPose != null) {
-        if (!detection.metadata.name.contains("Obelisk")) {
+      if (detection instanceof AprilTagSingleDetection singleDetection
+          && singleDetection.metadata != null
+          && singleDetection.robotPose != null) {
+        if (!singleDetection.metadata.name.contains("Obelisk")) {
           tagFound = true;
-          double detectedX = detection.robotPose.getPosition().x;
-          double detectedY = detection.robotPose.getPosition().y;
-          double headingRadians = detection.robotPose.getOrientation().getYaw(AngleUnit.RADIANS);
+          double detectedX = singleDetection.robotPose.getPosition().x;
+          double detectedY = singleDetection.robotPose.getPosition().y;
+          double headingRadians =
+              singleDetection.robotPose.getOrientation().getYaw(AngleUnit.RADIANS);
           Pose2D visionPose =
               new Pose2D(
                   DistanceUnit.INCH, detectedX, detectedY, AngleUnit.RADIANS, headingRadians);
