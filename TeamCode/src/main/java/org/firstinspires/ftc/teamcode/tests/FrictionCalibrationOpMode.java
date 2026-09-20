@@ -6,7 +6,6 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.util.List;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 @TeleOp(name = "Friction Calibration TeleOp", group = "Calibration")
 @Configurable
@@ -45,7 +44,7 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
       module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
     }
 
-    follower = Constants.createFollower(hardwareMap);
+    follower = new Follower(hardwareMap);
     follower.startTeleopDrive();
 
     telemetry.addLine("Friction Auto-Calibration initialized.");

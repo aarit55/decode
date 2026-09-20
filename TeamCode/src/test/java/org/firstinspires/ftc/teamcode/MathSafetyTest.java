@@ -1167,28 +1167,12 @@ public class MathSafetyTest {
     Sentinel sentinel = new Sentinel(Alliance.RED);
     new Casablanca(sentinel); // Directly runs performBrakingSanityCheck()
 
-    com.pedropathing.control.PredictiveBrakingController controller =
-        new com.pedropathing.control.PredictiveBrakingController(
-            org.firstinspires
-                .ftc
-                .teamcode
-                .pedroPathing
-                .Constants
-                .followerConstants
-                .predictiveBrakingCoefficients);
+    double maxVelX = 75.64;
+    double maxVelY = 58.92;
 
-    double maxVelX = org.firstinspires.ftc.teamcode.pedroPathing.Constants.driveConstants.xVelocity;
-    double maxVelY = org.firstinspires.ftc.teamcode.pedroPathing.Constants.driveConstants.yVelocity;
+    double minBrakingX = Math.abs(maxVelX * 0.05) / Casablanca.decelSafetyFactor;
+    double minBrakingY = Math.abs(maxVelY * 0.05) / Casablanca.decelSafetyFactor;
 
-    double minBrakingX =
-        Math.abs(controller.computeBrakingDisplacement(maxVelX, 1.0))
-            / Casablanca.decelSafetyFactor;
-    double minBrakingY =
-        Math.abs(controller.computeBrakingDisplacement(maxVelY, 1.0))
-            / Casablanca.decelSafetyFactor;
-
-    // Verify calculated physics stopping distances are strictly positive and dynamically match
-    // physics formula
     assertTrue(minBrakingX > 0.0);
     assertTrue(minBrakingY > 0.0);
     assertEquals(

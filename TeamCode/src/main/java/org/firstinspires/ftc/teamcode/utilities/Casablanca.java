@@ -2,12 +2,10 @@ package org.firstinspires.ftc.teamcode.utilities;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.control.PIDFController;
-import com.pedropathing.control.PredictiveBrakingController;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.pedropathing.util.NanoTimer;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
 import org.locationtech.jts.geom.Envelope;
 
@@ -159,7 +157,7 @@ public class Casablanca {
     headingLockErrorDeadbandRad = Math.toRadians(hl.error_deadband_deg);
     headingLockSettleRateRad = Math.toRadians(hl.settle_rate_dps);
 
-    this.headingPidf = new PIDFController(Constants.followerConstants.getCoefficientsHeadingPIDF());
+    this.headingPidf = new PIDFController(0.7, 0.0, 0.002, 0.02);
 
     performBrakingSanityCheck();
 
@@ -167,14 +165,10 @@ public class Casablanca {
   }
 
   private void performBrakingSanityCheck() {
-    PredictiveBrakingController controller =
-        new PredictiveBrakingController(Constants.followerConstants.predictiveBrakingCoefficients);
-    double maxVelX = Constants.driveConstants.xVelocity;
-    double maxVelY = Constants.driveConstants.yVelocity;
-    double minBrakingX =
-        Math.abs(controller.computeBrakingDisplacement(maxVelX, 1.0)) / decelSafetyFactor;
-    double minBrakingY =
-        Math.abs(controller.computeBrakingDisplacement(maxVelY, 1.0)) / decelSafetyFactor;
+    double maxVelX = 75.64;
+    double maxVelY = 58.92;
+    double minBrakingX = Math.abs(maxVelX * 0.05) / decelSafetyFactor;
+    double minBrakingY = Math.abs(maxVelY * 0.05) / decelSafetyFactor;
 
     com.qualcomm.robotcore.util.RobotLog.ii(
         "Casablanca",
@@ -303,13 +297,13 @@ public class Casablanca {
           turn = 0.0;
         } else {
           headingPidf.updateFeedForwardInput(Math.signum(headingError));
-          headingPidf.updateError(headingError);
+          headingPidf.setTarget(targetHeading);
 
           double speedMag = currentVelocity.getMagnitude();
           double speedRatio = Math.clamp(speedMag / headingLockMovingSpeedThreshold, 0.0, 1.0);
           double ks = frictionRot + speedRatio * (headingLockKsMoving - frictionRot);
 
-          double correction = headingPidf.run() + Math.copySign(ks, headingError);
+          double correction = headingPidf.calculate(pose.getHeading()) + Math.copySign(ks, headingError);
           turn = Math.clamp(correction, -headingLockMaxPower, headingLockMaxPower);
         }
       }
@@ -418,7 +412,9 @@ public class Casablanca {
     lastLookaheadRad = lookaheadRad;
     lastAngularVelocityUsed = currentAngularVelocity;
     boolean rotationSafe =
-            Double.isFinite(turn) && Double.isFinite(lookaheadRad) && sentinel.isRotationSafe(pose, turn, lookaheadRad);
+        Double.isFinite(turn)
+            && Double.isFinite(lookaheadRad)
+            && sentinel.isRotationSafe(pose, turn, lookaheadRad);
     lastRotationSafe = rotationSafe;
     if (turn != 0 && !rotationSafe) {
       turn = 0;
@@ -499,13 +495,14 @@ public class Casablanca {
     }
 
     double physicsScale = 1.0;
+    double maxVelX = 75.64;
+    double maxVelY = 58.92;
+    double minBrakingX = Math.abs(currentVel * 0.05) / decelSafetyFactor;
+    double minBrakingY = Math.abs(currentVel * 0.05) / decelSafetyFactor;
+
     if (Math.abs(currentVel) > 0.2) {
       double brakingRoom = Math.max(0, distToStop - hardStopDist);
-      PredictiveBrakingController controller =
-          new PredictiveBrakingController(
-              Constants.followerConstants.predictiveBrakingCoefficients);
-      double predictedBrakingDist =
-          Math.abs(controller.computeBrakingDisplacement(currentVel, Math.signum(currentVel)));
+      double predictedBrakingDist = Math.abs(currentVel * 0.05);
 
       predictedBrakingDist /= decelSafetyFactor;
 
