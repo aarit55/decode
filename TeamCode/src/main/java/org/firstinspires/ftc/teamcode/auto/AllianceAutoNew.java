@@ -9,7 +9,7 @@ import static org.firstinspires.ftc.teamcode.auto.PathUtil.pline;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.ivy.CommandBuilder;
-import com.pedropathing.paths.PathChain;
+import com.pedropathing.paths.Path;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.robot.Shooter;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
@@ -17,11 +17,11 @@ import org.firstinspires.ftc.teamcode.robot.config.generated.config;
 @Configurable
 public abstract class AllianceAutoNew extends AllianceAutoBase<config.NormalAuto> {
 
-  private PathChain scorePreload;
-  private PathChain grabPickup1, scorePickup1;
-  private PathChain drinkPickupStart, drinkPickupScore;
-  private PathChain grabPickup2, scorePickup2;
-  private PathChain grabPickup3, scorePickup3;
+  private Path scorePreload;
+  private Path grabPickup1, scorePickup1;
+  private Path drinkPickupStart, drinkPickupScore;
+  private Path grabPickup2, scorePickup2;
+  private Path grabPickup3, scorePickup3;
 
   protected AllianceAutoNew(Alliance alliance) {
     super(alliance, config.NormalAuto.class, "auto_poses.normal");
@@ -75,7 +75,7 @@ public abstract class AllianceAutoNew extends AllianceAutoBase<config.NormalAuto
             }));
   }
 
-  protected CommandBuilder intakeAndFollow(PathChain path) {
+  protected CommandBuilder intakeAndFollow(Path path) {
     return sequential(
         instant(
             () -> {

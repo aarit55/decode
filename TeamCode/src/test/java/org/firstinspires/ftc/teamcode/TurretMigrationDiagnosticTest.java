@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import static org.junit.Assert.assertEquals;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;

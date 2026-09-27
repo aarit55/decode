@@ -436,7 +436,7 @@ public class ConfigGeneratorMain {
     StringBuilder sb = new StringBuilder();
     sb.append("// AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY\n");
     sb.append("package org.firstinspires.ftc.teamcode.robot.config.generated;\n\n");
-    sb.append("import com.pedropathing.geometry.Pose;\n");
+    sb.append("import com.pedropathing.math" + ".Pose;\n");
     sb.append("import org.firstinspires.ftc.teamcode.config.ConfigLoader;\n");
     sb.append("import org.firstinspires.ftc.teamcode.records.Alliance;\n");
     sb.append("import org.firstinspires.ftc.teamcode.records.Field;\n");

@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.records;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 
 public record MatchProfile(
     Alliance alliance,

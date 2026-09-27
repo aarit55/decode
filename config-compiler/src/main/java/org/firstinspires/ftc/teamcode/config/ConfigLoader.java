@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.config;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -114,6 +114,17 @@ public final class ConfigLoader {
    * lists replace wholesale.
    */
   @SuppressWarnings("unchecked")
+  /** Field width (inches) used for red/blue mirroring; matches Pedro 2's {@code Pose.mirror()}. */
+  static final double MIRROR_FIELD_WIDTH = 141.5;
+
+  /**
+   * Mirrors a pose across the field's vertical center line: x -> 141.5 - x, heading -> pi -
+   * heading. Pedro 3 removed {@code Pose.mirror()}; this reproduces its Pedro 2 behavior exactly.
+   */
+  public static Pose mirror(Pose pose) {
+    return new Pose(MIRROR_FIELD_WIDTH - pose.x(), pose.y(), Math.PI - pose.heading());
+  }
+
   public static void deepMerge(Map<String, Object> base, Map<String, Object> override) {
     for (Map.Entry<String, Object> entry : override.entrySet()) {
       String key = entry.getKey();
@@ -358,7 +369,7 @@ public final class ConfigLoader {
       Pose pose = (Pose) coerce(baseVal, Pose.class);
       if (pose != null) {
         if (shouldMirrorPose) {
-          pose = pose.mirror();
+          pose = mirror(pose);
         }
         if (expr.isEmpty()) {
           return pose;
@@ -367,15 +378,15 @@ public final class ConfigLoader {
         String operandStr = expr.substring(1).trim();
         try {
           double operand = Double.parseDouble(operandStr);
-          double nx = pose.getX();
-          double ny = pose.getY();
+          double nx = pose.x();
+          double ny = pose.y();
           switch (op) {
             case '+': nx += operand; ny += operand; break;
             case '-': nx -= operand; ny -= operand; break;
             case '*': nx *= operand; ny *= operand; break;
             case '/': if (operand != 0) { nx /= operand; ny /= operand; } break;
           }
-          return new Pose(nx, ny, pose.getHeading());
+          return new Pose(nx, ny, pose.heading());
         } catch (NumberFormatException e) {
           return pose;
         }
@@ -565,7 +576,7 @@ public final class ConfigLoader {
                   if (rawMirrorVal != null && !isMirrorSignal(rawMirrorVal)) {
                     if (field.getType() == Pose.class || (rawMirrorVal instanceof List && ((List<?>) rawMirrorVal).size() == 3)) {
                       Pose basePose = (Pose) coerce(rawMirrorVal, Pose.class);
-                      resolved = basePose != null ? basePose.mirror() : null;
+                      resolved = basePose != null ? mirror(basePose) : null;
                     } else {
                       resolved = coerce(rawMirrorVal, field.getType());
                     }
@@ -616,8 +627,7 @@ public final class ConfigLoader {
       double heading = ((Number) Objects.requireNonNull(m.get("heading"))).doubleValue();
       return new Pose(x, y, Math.toRadians(heading));
     }
-    if ((type.getName().equals("com.qualcomm.robotcore.hardware.PIDFCoefficients")
-            || type.getName().equals("com.pedropathing.control.PIDFCoefficients"))
+    if (type.getName().equals("com.qualcomm.robotcore.hardware.PIDFCoefficients")
         && value instanceof Map) {
       Map<String, Object> m = (Map<String, Object>) value;
       double p = m.containsKey("p") ? ((Number) Objects.requireNonNull(m.get("p"))).doubleValue() : 0;
@@ -640,8 +650,6 @@ public final class ConfigLoader {
             throw new RuntimeException("Failed to instantiate com.qualcomm.robotcore.hardware.PIDFCoefficients", e1);
           }
         }
-      } else {
-        return new com.pedropathing.control.PIDFCoefficients(p, i, d, f);
       }
     }
     if (type == double.class || type == Double.class) {

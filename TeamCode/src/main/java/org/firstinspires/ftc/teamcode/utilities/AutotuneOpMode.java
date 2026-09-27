@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.utilities;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import java.util.List;
@@ -40,7 +40,7 @@ public abstract class AutotuneOpMode extends OpMode {
     }
 
     follower = Constants.createFollower(hardwareMap);
-    follower.setStartingPose(new Pose(0, 0, 0));
+    follower.setPose(new Pose(0, 0, 0));
 
     OpModeUtil.initPanelsField();
     telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
@@ -74,7 +74,7 @@ public abstract class AutotuneOpMode extends OpMode {
 
   @Override
   public void start() {
-    follower.startTeleopDrive();
+    OpModeUtil.startTeleOpDrive(follower);
   }
 
   @Override

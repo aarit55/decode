@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.tests;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.config.ConfigLoader;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
+import org.firstinspires.ftc.teamcode.utilities.OpModeUtil;
 
 /**
  * Odometry never starts the match knowing where it is; this OpMode gives a human the delta needed
@@ -44,7 +45,7 @@ public class StartPoseFinderOpMode extends OpMode {
   public void init() {
     config.reload();
     follower = Constants.createCachedFollower(hardwareMap);
-    follower.setStartingPose(new Pose(72, 72, 0));
+    follower.setPose(new Pose(72, 72, 0));
     recomputeConfigStartPose();
   }
 
@@ -57,15 +58,15 @@ public class StartPoseFinderOpMode extends OpMode {
     telemetry.addData(
         "Config start pose",
         "(%.1f, %.1f, %.1f deg)",
-        configStartPose.getX(),
-        configStartPose.getY(),
-        Math.toDegrees(configStartPose.getHeading()));
+        configStartPose.x(),
+        configStartPose.y(),
+        Math.toDegrees(configStartPose.heading()));
     telemetry.update();
   }
 
   @Override
   public void start() {
-    follower.startTeleopDrive();
+    OpModeUtil.startTeleOpDrive(follower);
   }
 
   @Override
@@ -76,7 +77,8 @@ public class StartPoseFinderOpMode extends OpMode {
     // Deliberately raw and robot-centric, bypassing Casablanca: the whole premise of this OpMode is
     // that the follower's pose is not yet trusted, and Casablanca's zone protections are computed
     // from that pose. Cubed sticks give resolution near center, which is where all the work is.
-    follower.setTeleOpDrive(
+    OpModeUtil.setTeleOpDrive(
+        follower,
         Math.clamp(-Math.pow(gamepad1.left_stick_y, 3), -driveSpeed, driveSpeed),
         Math.clamp(-Math.pow(gamepad1.left_stick_x, 3), -driveSpeed, driveSpeed),
         Math.clamp(-Math.pow(gamepad1.right_stick_x, 3), -driveSpeed, driveSpeed),
@@ -84,10 +86,10 @@ public class StartPoseFinderOpMode extends OpMode {
 
     follower.update();
 
-    Pose currentPose = follower.getPose();
-    double dx = configStartPose.getX() - currentPose.getX();
-    double dy = configStartPose.getY() - currentPose.getY();
-    double distance = currentPose.distanceFrom(configStartPose);
+    Pose currentPose = follower.pose();
+    double dx = configStartPose.x() - currentPose.x();
+    double dy = configStartPose.y() - currentPose.y();
+    double distance = currentPose.distance(configStartPose);
     double bearingDeg = AngleUnit.normalizeDegrees(Math.toDegrees(Math.atan2(dy, dx)));
 
     telemetry.addLine("== Start Pose Finder ==");
@@ -97,15 +99,15 @@ public class StartPoseFinderOpMode extends OpMode {
     telemetry.addData(
         "Raw follower pose",
         "(%.2f, %.2f, %.1f deg)",
-        currentPose.getX(),
-        currentPose.getY(),
-        Math.toDegrees(currentPose.getHeading()));
+        currentPose.x(),
+        currentPose.y(),
+        Math.toDegrees(currentPose.heading()));
     telemetry.addData(
         "Raw start pose",
         "(%.2f, %.2f, %.1f deg)",
-        configStartPose.getX(),
-        configStartPose.getY(),
-        Math.toDegrees(configStartPose.getHeading()));
+        configStartPose.x(),
+        configStartPose.y(),
+        Math.toDegrees(configStartPose.heading()));
     telemetry.addLine();
     telemetry.addData("Distance to start", "%.2f in", distance);
     telemetry.addData("Move", "%+.2f in X, %+.2f in Y", dx, dy);
@@ -115,7 +117,7 @@ public class StartPoseFinderOpMode extends OpMode {
     telemetry.update();
 
     if (gamepad1.a && !lastA) {
-      follower.setStartingPose(configStartPose);
+      follower.setPose(configStartPose);
     }
     lastA = gamepad1.a;
   }

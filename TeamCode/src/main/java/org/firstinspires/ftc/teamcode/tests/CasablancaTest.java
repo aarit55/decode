@@ -4,7 +4,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.bylazar.field.FieldManager;
 import com.bylazar.field.PanelsField;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.records.Field;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
 import org.firstinspires.ftc.teamcode.utilities.Casablanca;
 import org.firstinspires.ftc.teamcode.utilities.DrawingUtil;
+import org.firstinspires.ftc.teamcode.utilities.OpModeUtil;
 import org.firstinspires.ftc.teamcode.utilities.Sentinel;
 
 @Configurable
@@ -66,7 +67,7 @@ public class CasablancaTest extends OpMode {
 
     // Build Pedro Pathing Follower with starting pose matching LocalizationTest
     follower = Constants.createFollower(hardwareMap);
-    follower.setStartingPose(startPose);
+    follower.setPose(startPose);
 
     goalX = Field.getBlueGoalX();
     goalY = Field.getBlueGoalY();
@@ -77,7 +78,7 @@ public class CasablancaTest extends OpMode {
 
   @Override
   public void start() {
-    follower.startTeleopDrive();
+    OpModeUtil.startTeleOpDrive(follower);
     casablanca.reset();
   }
 
@@ -97,7 +98,7 @@ public class CasablancaTest extends OpMode {
   }
 
   private void handleDrive() {
-    Pose currentPose = follower.getPose();
+    Pose currentPose = follower.pose();
 
     if (rawDirectDrive) {
       // Direct raw drive: bypass cubic curve and Casablanca processing entirely
@@ -105,7 +106,7 @@ public class CasablancaTest extends OpMode {
       double strafeRaw = -gamepad1.left_stick_x;
       double turnRaw = -gamepad1.right_stick_x;
 
-      follower.setTeleOpDrive(forwardRaw, strafeRaw, turnRaw, fieldcentric);
+      OpModeUtil.setTeleOpDrive(follower, forwardRaw, strafeRaw, turnRaw, fieldcentric);
 
       telemetry.addData("Mode", "[RAW DIRECT DRIVE (BYPASSED)]");
       telemetry.addData("Raw Stick Input", "F:%.2f S:%.2f T:%.2f", forwardRaw, strafeRaw, turnRaw);
@@ -120,15 +121,15 @@ public class CasablancaTest extends OpMode {
       double[] adjusted =
           casablanca.adjustDriveInput(
               currentPose,
-              follower.getVelocity(),
-              follower.getAngularVelocity(),
+              follower.velocity().toVector2D(),
+              follower.velocity().omega,
               strafe,
               forward,
               turn,
               -gamepad1.right_stick_x);
 
       // Casablanca returns [strafe, forward, turn] -> Follower expects [forward, strafe, turn]
-      follower.setTeleOpDrive(adjusted[1], adjusted[0], adjusted[2], fieldcentric);
+      OpModeUtil.setTeleOpDrive(follower, adjusted[1], adjusted[0], adjusted[2], fieldcentric);
 
       telemetry.addData("Mode", "[TELEOP DRIVE + CASABLANCA]");
       telemetry.addData("Cubic Input", "F:%.2f S:%.2f T:%.2f", forward, strafe, turn);
@@ -193,16 +194,16 @@ public class CasablancaTest extends OpMode {
     telemetry.addData(
         "Robot Pose",
         "X:%.2f in | Y:%.2f in | H:%.2f deg",
-        currentPose.getX(),
-        currentPose.getY(),
-        Math.toDegrees(currentPose.getHeading()));
+        currentPose.x(),
+        currentPose.y(),
+        Math.toDegrees(currentPose.heading()));
 
     telemetry.addData(
         "Robot Velocity",
         "X:%.2f in | Y:%.2f in | H:%.2f deg",
-        follower.getVelocity().getXComponent(),
-        follower.getVelocity().getYComponent(),
-        Math.toDegrees(follower.getAngularVelocity()));
+        follower.velocity().vx,
+        follower.velocity().vy,
+        Math.toDegrees(follower.velocity().omega));
   }
 
   private void drawField() {
@@ -210,9 +211,9 @@ public class CasablancaTest extends OpMode {
       DrawingUtil.drawCasablancaZones(field, sentinel);
       DrawingUtil.drawRobotOnField(
           field,
-          follower.getPose().getX(),
-          follower.getPose().getY(),
-          follower.getPose().getHeading(),
+          follower.pose().x(),
+          follower.pose().y(),
+          follower.pose().heading(),
           0.0,
           goalX,
           goalY);

@@ -6,9 +6,9 @@ import static com.pedropathing.ivy.commands.Commands.waitUntil;
 import static com.pedropathing.ivy.groups.Groups.race;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.CommandBuilder;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -203,10 +203,10 @@ public class ShotController {
     return Command.build()
         .setStart(
             () -> {
-              follower.holdPoint(follower.getPose());
+              follower.hold(follower.pose(), true);
               startShot(Shooter.constantPower(), true);
             })
-        .setDone(() -> !sentinel.isLaunchAllowed(follower.getPose()))
+        .setDone(() -> !sentinel.isLaunchAllowed(follower.pose()))
         .setEnd(interrupted -> stopShot())
         .requiring(follower, shooter, turret, intake);
   }
@@ -217,7 +217,7 @@ public class ShotController {
             race(
                 aimAndShootCommand(follower, sentinel),
                 waitUntil(() -> ballsFired >= config.auto.balls_per_shot_count),
-                waitMs(ShotTimeTable.windowMsFor(targetRpmAt(follower.getPose())))));
+                waitMs(ShotTimeTable.windowMsFor(targetRpmAt(follower.pose())))));
   }
 
   public int shotWindowMsAt(Pose pose) {
@@ -225,8 +225,7 @@ public class ShotController {
   }
 
   private double distanceToGoal(Pose pose) {
-    return Math.hypot(
-        Field.getGoalY(alliance) - pose.getY(), Field.getGoalX(alliance) - pose.getX());
+    return Math.hypot(Field.getGoalY(alliance) - pose.y(), Field.getGoalX(alliance) - pose.x());
   }
 
   private double targetRpmAt(Pose pose) {

@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.ballistics;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import java.util.Locale;
 import org.firstinspires.ftc.teamcode.records.BallisticsParameters;
 import org.firstinspires.ftc.teamcode.records.ShotInputs;
@@ -18,13 +18,13 @@ public class ShotSolver {
     Pose pose = inputs.robotPose();
     Pose vel = inputs.robotVelocity() != null ? inputs.robotVelocity() : new Pose(0, 0, 0);
 
-    double rx = pose.getX();
-    double ry = pose.getY();
+    double rx = pose.x();
+    double ry = pose.y();
     double gx = inputs.targetGoalX();
     double gy = inputs.targetGoalY();
 
-    double vx = vel.getX();
-    double vy = vel.getY();
+    double vx = vel.x();
+    double vy = vel.y();
     double robotSpeed = Math.hypot(vx, vy);
 
     if (robotSpeed > params.maxMovingSpeedIps()) {

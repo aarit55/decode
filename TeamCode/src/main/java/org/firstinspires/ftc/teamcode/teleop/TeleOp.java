@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.teleop;
 
 import com.bylazar.configurables.annotations.Configurable;
-import com.pedropathing.geometry.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.teamcode.robot.Shooter;
 import org.firstinspires.ftc.teamcode.robot.Turret;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
@@ -28,18 +28,20 @@ public class TeleOp extends TeleOpBase {
   @Override
   protected void buildCommands() {
     parkCommand =
-        Command.build().setStart(() -> follower.holdPoint(profile.parkPose())).requiring(follower);
+        Command.build().setStart(() -> follower.hold(profile.parkPose(), true)).requiring(follower);
 
     scoreCommand =
         Command.build()
             .setStart(
                 () -> {
-                  follower.holdPoint(profile.scorePose());
+                  follower.hold(profile.scorePose(), true);
                 })
             .requiring(follower);
 
     drinkCommand =
-        Command.build().setStart(() -> follower.holdPoint(profile.drinkPose())).requiring(follower);
+        Command.build()
+            .setStart(() -> follower.hold(profile.drinkPose(), true))
+            .requiring(follower);
 
     intakeCommand =
         Command.build()
@@ -89,7 +91,7 @@ public class TeleOp extends TeleOpBase {
 
   @Override
   protected void onLoop() {
-    boolean launchAllowed = sentinel.isLaunchAllowed(follower.getPose());
+    boolean launchAllowed = sentinel.isLaunchAllowed(follower.pose());
 
     // A starts the intake, B stops it. B used to be a second copy of the rev button, which left no
     // dedicated way to stop the intake once rev moved onto its own button.
@@ -168,9 +170,9 @@ public class TeleOp extends TeleOpBase {
       goalHeadingLockEngaged = false;
     }
 
-    Pose pose = follower.getPose();
+    Pose pose = follower.pose();
     casablanca.setGoalHeadingLock(
-        Turret.alignPose(pose.getX(), pose.getY(), profile.goalX(), profile.goalY()).getHeading(),
+        Turret.alignPose(pose.x(), pose.y(), profile.goalX(), profile.goalY()).heading(),
         goalHeadingLockEngaged);
 
     boolean driverStickDeflected =

@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode.tests;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
@@ -19,7 +19,7 @@ public class ManualTurretTurnTest extends LinearOpMode {
   public void runOpMode() throws InterruptedException {
     org.firstinspires.ftc.teamcode.robot.config.generated.config.reload();
     follower = Constants.createFollower(hardwareMap);
-    follower.setStartingPose(new Pose(0, 0, 0));
+    follower.setPose(new Pose(0, 0, 0));
     turret = new Turret(hardwareMap, telemetry, follower);
 
     waitForStart();
@@ -33,7 +33,7 @@ public class ManualTurretTurnTest extends LinearOpMode {
         turret.setTargetTurnAngle(turn_degrees);
       }
 
-      turret.updateTurret(follower.getPose());
+      turret.updateTurret(follower.pose());
 
       telemetry.addData("Turret Angle", turret.getCurrentTurnAngle());
       telemetry.addData("Target Angle", turret.getTargetTurnAngle());

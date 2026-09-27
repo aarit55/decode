@@ -1,7 +1,7 @@
 // AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
 package org.firstinspires.ftc.teamcode.robot.config.generated;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.teamcode.config.ConfigLoader;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.records.MatchProfile;

@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import java.lang.reflect.Field;
 import org.firstinspires.ftc.teamcode.config.ConfigLoader;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
@@ -13,12 +13,13 @@ import org.junit.Test;
 
 /**
  * Covers the ConfigLoader "mirror" system (an {@code m}/{@code mirror} value means "derive this
- * from the opposite alliance's value via {@link Pose#mirror()}"). {@code auto_poses.opposite.red}
- * and {@code auto_poses.normal.red} are now explicit, field-tuned poses (pulled from the historical
- * Red autos) rather than {@code m} placeholders, because they are not exact geometric mirrors of
- * blue (e.g. opposite start x=87 vs. mirror-of-blue x=84.5) — driving/vision asymmetry meant the
- * two alliances were tuned separately on the field. The generic mirror-evaluation utility itself
- * (used elsewhere, and by scalar/non-pose keys) is still covered below.
+ * from the opposite alliance's value via {@link ConfigLoader#mirror(Pose)}"). {@code
+ * auto_poses.opposite.red} and {@code auto_poses.normal.red} are now explicit, field-tuned poses
+ * (pulled from the historical Red autos) rather than {@code m} placeholders, because they are not
+ * exact geometric mirrors of blue (e.g. opposite start x=87 vs. mirror-of-blue x=84.5) —
+ * driving/vision asymmetry meant the two alliances were tuned separately on the field. The generic
+ * mirror-evaluation utility itself (used elsewhere, and by scalar/non-pose keys) is still covered
+ * below.
  */
 public class ConfigLoaderMirrorTest {
 
@@ -45,9 +46,8 @@ public class ConfigLoaderMirrorTest {
       assertNotNull("blue " + f.getName() + " should be explicitly defined", bp);
       assertNotNull("red " + f.getName() + " should be explicitly defined", rp);
 
-      Pose mirrored = bp.mirror();
-      if (Math.abs(mirrored.getX() - rp.getX()) > EPS
-          || Math.abs(mirrored.getY() - rp.getY()) > EPS) {
+      Pose mirrored = ConfigLoader.mirror(bp);
+      if (Math.abs(mirrored.x() - rp.x()) > EPS || Math.abs(mirrored.y() - rp.y()) > EPS) {
         anyDiffersFromMirror = true;
       }
       checked++;
@@ -67,8 +67,8 @@ public class ConfigLoaderMirrorTest {
     assertNotNull(blue);
     assertNotNull(red);
     // Historical Red Opposite start pose (RedOppositeNew.java): (87, 8, 90deg).
-    assertEquals(87.0, red.getX(), EPS);
-    assertEquals(8.0, red.getY(), EPS);
+    assertEquals(87.0, red.x(), EPS);
+    assertEquals(8.0, red.y(), EPS);
   }
 
   /**
@@ -79,11 +79,11 @@ public class ConfigLoaderMirrorTest {
   public void explicitRedPose_isNotPassthroughOfMirror() {
     Pose blue = ConfigLoader.load(Pose.class, "auto_poses.opposite.blue.start");
     Pose red = ConfigLoader.load(Pose.class, "auto_poses.opposite.red.start");
-    assertNotEquals("red x should differ from blue x", blue.getX(), red.getX(), 1e-6);
+    assertNotEquals("red x should differ from blue x", blue.x(), red.x(), 1e-6);
     assertNotEquals(
         "red x should not equal the exact Pedro mirror (field length 141.5) of blue x",
-        141.5 - blue.getX(),
-        red.getX(),
+        141.5 - blue.x(),
+        red.x(),
         EPS);
   }
 
@@ -135,26 +135,26 @@ public class ConfigLoaderMirrorTest {
     eval.setAccessible(true);
 
     Pose basePose = new Pose(27.0, 128.0, 135.0);
-    Pose expectedMirror = basePose.mirror();
+    Pose expectedMirror = ConfigLoader.mirror(basePose);
 
     // 'm' mirrors the pose
     Pose mirrored = (Pose) eval.invoke(null, basePose, "m", Pose.class, "dummy");
-    assertEquals(expectedMirror.getX(), mirrored.getX(), EPS);
-    assertEquals(expectedMirror.getY(), mirrored.getY(), EPS);
+    assertEquals(expectedMirror.x(), mirrored.x(), EPS);
+    assertEquals(expectedMirror.y(), mirrored.y(), EPS);
 
     // 'm+2' mirrors the pose first, then adds 2
     Pose mirroredPlusTwo = (Pose) eval.invoke(null, basePose, "m+2", Pose.class, "dummy");
-    assertEquals(expectedMirror.getX() + 2.0, mirroredPlusTwo.getX(), EPS);
-    assertEquals(expectedMirror.getY() + 2.0, mirroredPlusTwo.getY(), EPS);
+    assertEquals(expectedMirror.x() + 2.0, mirroredPlusTwo.x(), EPS);
+    assertEquals(expectedMirror.y() + 2.0, mirroredPlusTwo.y(), EPS);
 
     // 'k' keeps the original pose UN-MIRRORED
     Pose original = (Pose) eval.invoke(null, basePose, "k", Pose.class, "dummy");
-    assertEquals(basePose.getX(), original.getX(), EPS);
-    assertEquals(basePose.getY(), original.getY(), EPS);
+    assertEquals(basePose.x(), original.x(), EPS);
+    assertEquals(basePose.y(), original.y(), EPS);
 
     // 'k+2' keeps original pose and adds 2
     Pose originalPlusTwo = (Pose) eval.invoke(null, basePose, "k+2", Pose.class, "dummy");
-    assertEquals(basePose.getX() + 2.0, originalPlusTwo.getX(), EPS);
-    assertEquals(basePose.getY() + 2.0, originalPlusTwo.getY(), EPS);
+    assertEquals(basePose.x() + 2.0, originalPlusTwo.x(), EPS);
+    assertEquals(basePose.y() + 2.0, originalPlusTwo.y(), EPS);
   }
 }

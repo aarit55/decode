@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.records;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 
 /** Immutable live inputs fed into the stateless shot solver every control loop. */
 public record ShotInputs(
