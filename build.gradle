@@ -1,0 +1,41 @@
+/**
+ * Top-level build file for ftc_app project.
+ *
+ * It is extraordinarily rare that you will ever need to edit this file.
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+        google()
+        gradlePluginPortal()
+    }
+    dependencies {
+        // Note for FTC Teams: Do not modify this yourself.
+        classpath 'com.android.tools.build:gradle:9.3.1'
+        classpath "net.ltgt.gradle:gradle-errorprone-plugin:4.0.1"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:8.8.0"
+    }
+}
+
+// This is now required because aapt2 has to be downloaded from the
+// google() repository beginning with version 3.2 of the Android Gradle Plugin
+allprojects {
+    repositories {
+        mavenCentral()
+        google()
+        maven {
+            url = "https://mymaven.bylazar.com/releases"
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+tasks.register('connectAdb') {
+    group = 'deploy'
+    description = 'Connects to robot via ADB over Wi-Fi (defaults to 192.168.43.1:5555), auto-reconnecting if already connected.'
+    dependsOn ':TeamCode:connectAdb'
+}

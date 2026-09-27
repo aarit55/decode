@@ -1,0 +1,37 @@
+Robot:
+  Control Hub:
+    Motors (5202/3/4):
+      0: leftFront
+      1: rightFront
+      2: leftBack
+      3: rightBack
+    Servos:
+    Digital Devices:
+    Analog Input Devices:
+    I2C:
+      0 (GoBILDA Pinpoint Driver): pinpoint
+      1:
+      2:
+      3:
+  Expansion Hub:
+    Motors (5202/2/4):
+      0: intakeFront
+      1: intakeMid
+      2: shooter2
+      3: shooter
+    Servos:
+      0:
+      1:
+      2:
+      3 (SERVO): hood
+      4 (CR SERVO): turn
+      5 (SERVO): gate
+    Digital Devices:
+    Analog Input Devices:
+      0: turnanalog
+    I2C:
+      0:
+      1: turnImu
+      2 (9-axis IMU):
+      3:
+  Webcam: Webcam 1
