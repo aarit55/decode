@@ -380,7 +380,7 @@ public class ShotTimingTunerOpMode extends LinearOpMode {
         ballEvent,
         robot.shotController.isFeedCommanded(),
         robot.shotController.isFlywheelReady(),
-        robot.turret.isAimed(robot.follower.getPose()),
+        robot.turret.isAimed(robot.follower.pose()),
         solution.isValid(),
         robot.shooter.getTargetHoodPosition(),
         solution.targetRpm());

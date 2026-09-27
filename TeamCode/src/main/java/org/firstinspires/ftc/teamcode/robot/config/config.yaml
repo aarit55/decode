@@ -88,6 +88,11 @@ casablanca:
     max_power: 0.30
     error_deadband_deg: 2.0
     settle_rate_dps: 15.0
+    static_ff: 0.02
+    pid:
+      p: 0.7
+      i: 0.0
+      d: 0.002
 
 
 shooter:

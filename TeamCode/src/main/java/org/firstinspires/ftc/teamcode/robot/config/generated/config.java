@@ -1,7 +1,7 @@
 // AUTO-GENERATED FILE - DO NOT EDIT DIRECTLY
 package org.firstinspires.ftc.teamcode.robot.config.generated;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.teamcode.config.ConfigLoader;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.records.MatchProfile;
@@ -84,6 +84,10 @@ public final class config {
   public static double CASABLANCA_HEADING_LOCK_MAX_POWER;
   public static double CASABLANCA_HEADING_LOCK_ERROR_DEADBAND_DEG;
   public static double CASABLANCA_HEADING_LOCK_SETTLE_RATE_DPS;
+  public static double CASABLANCA_HEADING_LOCK_STATIC_FF;
+  public static double CASABLANCA_HEADING_LOCK_PID_P;
+  public static double CASABLANCA_HEADING_LOCK_PID_I;
+  public static double CASABLANCA_HEADING_LOCK_PID_D;
   public static boolean SHOOTER_USE_FTC_PID;
   public static double SHOOTER_KS;
   public static double SHOOTER_NOMINAL_VOLTAGE;
@@ -241,6 +245,10 @@ public final class config {
     CASABLANCA_HEADING_LOCK_MAX_POWER = casablanca.heading_lock.max_power;
     CASABLANCA_HEADING_LOCK_ERROR_DEADBAND_DEG = casablanca.heading_lock.error_deadband_deg;
     CASABLANCA_HEADING_LOCK_SETTLE_RATE_DPS = casablanca.heading_lock.settle_rate_dps;
+    CASABLANCA_HEADING_LOCK_STATIC_FF = casablanca.heading_lock.static_ff;
+    CASABLANCA_HEADING_LOCK_PID_P = casablanca.heading_lock.pid.p;
+    CASABLANCA_HEADING_LOCK_PID_I = casablanca.heading_lock.pid.i;
+    CASABLANCA_HEADING_LOCK_PID_D = casablanca.heading_lock.pid.d;
     SHOOTER_USE_FTC_PID = shooter.use_ftc_pid;
     SHOOTER_KS = shooter.ks;
     SHOOTER_NOMINAL_VOLTAGE = shooter.nominal_voltage;
@@ -694,6 +702,16 @@ public final class config {
        * robot's own momentum. Minimum: 0.0
        */
       public double settle_rate_dps;
+
+      /**
+       * Base static feedforward (0.0 to 1.0) added in the direction of the heading error by the
+       * TeleOp heading lock, on top of the speed-blended friction feedforward (friction.rot ->
+       * ks_moving). The heading lock's PID gains live in casablanca.heading_lock.pid (error in
+       * radians -> turn power). Minimum: 0.0 Maximum: 1.0
+       */
+      public double static_ff;
+
+      public com.qualcomm.robotcore.hardware.PIDFCoefficients pid;
     }
 
     public HeadingLock heading_lock;
@@ -702,9 +720,9 @@ public final class config {
   public static final class Shooter {
     /**
      * When true, uses the REV firmware velocity PID on the motor (RUN_USING_ENCODER with
-     * setVelocity, gains from shooter.motor_pidf). When false, uses the custom Pedro PIDF
-     * controller, anti-windup integrator, and voltage compensation (RUN_WITHOUT_ENCODER, gains from
-     * shooter.pidf).
+     * setVelocity, gains from shooter.motor_pidf). When false, uses the software Pedro PID
+     * controller (Controller.pid), anti-windup integrator, and voltage compensation
+     * (RUN_WITHOUT_ENCODER, gains from shooter.pidf).
      */
     public boolean use_ftc_pid;
 
@@ -822,10 +840,10 @@ public final class config {
     /**
      * REV firmware velocity PIDF (p, i, d, f) applied directly to the flywheel motors via
      * DcMotorEx.setPIDFCoefficients when shooter.use_ftc_pid is true. Distinct from shooter.pidf,
-     * which only feeds the software PIDFController used when use_ftc_pid is false and is never sent
-     * to the motor. Keep i at 0 here: a live integral on the motor firmware winds up during a
-     * feed's velocity sag and overshoots the setpoint once the ball leaves, which is what stalled
-     * the third shot of a magazine.
+     * which only feeds the software Pedro PID controller used when use_ftc_pid is false and is
+     * never sent to the motor. Keep i at 0 here: a live integral on the motor firmware winds up
+     * during a feed's velocity sag and overshoots the setpoint once the ball leaves, which is what
+     * stalled the third shot of a magazine.
      */
     public com.qualcomm.robotcore.hardware.PIDFCoefficients motor_pidf;
 

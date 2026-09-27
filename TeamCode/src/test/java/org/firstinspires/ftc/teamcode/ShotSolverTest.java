@@ -4,7 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
+import com.pedropathing.math.Velocity;
 import org.firstinspires.ftc.teamcode.ballistics.ShotSolver;
 import org.firstinspires.ftc.teamcode.ballistics.ShotTable;
 import org.firstinspires.ftc.teamcode.records.BallisticsParameters;
@@ -55,7 +56,7 @@ public class ShotSolverTest {
 
   @Test
   public void testStaticRobotSolution() {
-    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Pose(0, 0, 0), 72.0, 0.0);
+    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Velocity(0, 0, 0), 72.0, 0.0);
 
     ShotSolution solution = ShotSolver.solve(inputs, table, params, 0.4);
 
@@ -70,7 +71,7 @@ public class ShotSolverTest {
 
   @Test
   public void testSolutionComesStraightFromTheMeasuredTable() {
-    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Pose(0, 0, 0), 72.0, 0.0);
+    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Velocity(0, 0, 0), 72.0, 0.0);
 
     ShotSolution solution = ShotSolver.solve(inputs, table, params, 0.4);
 
@@ -81,7 +82,7 @@ public class ShotSolverTest {
 
   @Test
   public void testInterpolatesBetweenCalibratedDistances() {
-    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Pose(0, 0, 0), 84.0, 0.0);
+    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Velocity(0, 0, 0), 84.0, 0.0);
 
     ShotSolution solution = ShotSolver.solve(inputs, table, params, 0.4);
 
@@ -93,7 +94,7 @@ public class ShotSolverTest {
   @Test
   public void testMovingRobotLeadCorrection() {
     // Robot moving sideways in Y at +30 in/s
-    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Pose(0, 30.0, 0), 72.0, 0.0);
+    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Velocity(0, 30.0, 0), 72.0, 0.0);
 
     ShotSolution solution = ShotSolver.solve(inputs, table, params, 0.4);
 
@@ -105,8 +106,8 @@ public class ShotSolverTest {
 
   @Test
   public void testFartherShotsGetMoreFlywheelAndFlatterHoodFromTheTable() {
-    ShotInputs near = new ShotInputs(new Pose(0, 0, 0), new Pose(0, 0, 0), 48.0, 0.0);
-    ShotInputs far = new ShotInputs(new Pose(0, 0, 0), new Pose(0, 0, 0), 140.0, 0.0);
+    ShotInputs near = new ShotInputs(new Pose(0, 0, 0), new Velocity(0, 0, 0), 48.0, 0.0);
+    ShotInputs far = new ShotInputs(new Pose(0, 0, 0), new Velocity(0, 0, 0), 140.0, 0.0);
 
     ShotSolution nearSol = ShotSolver.solve(near, table, params, 0.4);
     ShotSolution farSol = ShotSolver.solve(far, table, params, 0.4);
@@ -120,7 +121,7 @@ public class ShotSolverTest {
   /** Past the last measured row there is nothing to interpolate, so the solution must not pass. */
   @Test
   public void testBeyondCalibratedRangeIsInvalid() {
-    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Pose(0, 0, 0), 155.0, 0.0);
+    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Velocity(0, 0, 0), 155.0, 0.0);
 
     ShotSolution solution = ShotSolver.solve(inputs, table, params, 0.4);
 
@@ -142,14 +143,14 @@ public class ShotSolverTest {
   public void testLowSpeedVelocityNoiseDoesNotMoveTheAimAzimuth() {
     Pose pose = new Pose(0, 0, 0);
     double still =
-        ShotSolver.solve(new ShotInputs(pose, new Pose(0, 0, 0), 72.0, 0.0), table, params, 0.4)
+        ShotSolver.solve(new ShotInputs(pose, new Velocity(0, 0, 0), 72.0, 0.0), table, params, 0.4)
             .targetAzimuthRad();
 
     // Sweep plausible estimator noise below the lead threshold; aim must not budge.
     for (double noise : new double[] {-9.0, -5.0, -2.0, 2.0, 5.0, 9.0}) {
       double jittered =
           ShotSolver.solve(
-                  new ShotInputs(pose, new Pose(0, noise, 0), 72.0, 0.0), table, params, 0.4)
+                  new ShotInputs(pose, new Velocity(0, noise, 0), 72.0, 0.0), table, params, 0.4)
               .targetAzimuthRad();
       assertEquals(
           "velocity noise of " + noise + " in/s must not steer the turret", still, jittered, 1e-9);
@@ -161,10 +162,11 @@ public class ShotSolverTest {
   public void testLeadStillAppliesOnceActuallyMoving() {
     Pose pose = new Pose(0, 0, 0);
     double still =
-        ShotSolver.solve(new ShotInputs(pose, new Pose(0, 0, 0), 72.0, 0.0), table, params, 0.4)
+        ShotSolver.solve(new ShotInputs(pose, new Velocity(0, 0, 0), 72.0, 0.0), table, params, 0.4)
             .targetAzimuthRad();
     double moving =
-        ShotSolver.solve(new ShotInputs(pose, new Pose(0, 40.0, 0), 72.0, 0.0), table, params, 0.4)
+        ShotSolver.solve(
+                new ShotInputs(pose, new Velocity(0, 40.0, 0), 72.0, 0.0), table, params, 0.4)
             .targetAzimuthRad();
 
     assertTrue("a genuinely moving robot must still lead its shot", moving < still - 1e-6);
@@ -173,7 +175,7 @@ public class ShotSolverTest {
   @Test
   public void testMaxSpeedGateEnforcement() {
     // Robot moving at 80 in/s (exceeds max speed gate 60 in/s)
-    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Pose(80.0, 0.0, 0), 72.0, 0.0);
+    ShotInputs inputs = new ShotInputs(new Pose(0, 0, 0), new Velocity(80.0, 0.0, 0), 72.0, 0.0);
 
     ShotSolution solution = ShotSolver.solve(inputs, table, params, 0.4);
 

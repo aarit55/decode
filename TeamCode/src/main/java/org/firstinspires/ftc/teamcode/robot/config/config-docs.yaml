@@ -196,11 +196,16 @@ settle_rate_dps:
   desc: "Rotation rate (degrees/sec) below which the robot counts as settled. Heading lock waits for this before capturing the heading to hold, so it does not latch mid-coast and fight the robot's own momentum."
   min: 0.0
 
+static_ff:
+  desc: "Base static feedforward (0.0 to 1.0) added in the direction of the heading error by the TeleOp heading lock, on top of the speed-blended friction feedforward (friction.rot -> ks_moving). The heading lock's PID gains live in casablanca.heading_lock.pid (error in radians -> turn power)."
+  min: 0.0
+  max: 1.0
+
 use_ftc_pid:
-  desc: "When true, uses the REV firmware velocity PID on the motor (RUN_USING_ENCODER with setVelocity, gains from shooter.motor_pidf). When false, uses the custom Pedro PIDF controller, anti-windup integrator, and voltage compensation (RUN_WITHOUT_ENCODER, gains from shooter.pidf)."
+  desc: "When true, uses the REV firmware velocity PID on the motor (RUN_USING_ENCODER with setVelocity, gains from shooter.motor_pidf). When false, uses the software Pedro PID controller (Controller.pid), anti-windup integrator, and voltage compensation (RUN_WITHOUT_ENCODER, gains from shooter.pidf)."
 
 motor_pidf:
-  desc: "REV firmware velocity PIDF (p, i, d, f) applied directly to the flywheel motors via DcMotorEx.setPIDFCoefficients when shooter.use_ftc_pid is true. Distinct from shooter.pidf, which only feeds the software PIDFController used when use_ftc_pid is false and is never sent to the motor. Keep i at 0 here: a live integral on the motor firmware winds up during a feed's velocity sag and overshoots the setpoint once the ball leaves, which is what stalled the third shot of a magazine."
+  desc: "REV firmware velocity PIDF (p, i, d, f) applied directly to the flywheel motors via DcMotorEx.setPIDFCoefficients when shooter.use_ftc_pid is true. Distinct from shooter.pidf, which only feeds the software Pedro PID controller used when use_ftc_pid is false and is never sent to the motor. Keep i at 0 here: a live integral on the motor firmware winds up during a feed's velocity sag and overshoots the setpoint once the ball leaves, which is what stalled the third shot of a magazine."
 
 max_rpm:
   desc: "Maximum rotational speed (RPM) of the motor. Used to scale power percentage to velocity."

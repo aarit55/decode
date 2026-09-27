@@ -957,6 +957,63 @@
                   "pattern": "^(?i)(m|k|mirror|key)?\\s*[+\\-*/]?\\s*\\d*(\\.\\d+)?$"
                 }
               ]
+            },
+            "static_ff": {
+              "description": "Base static feedforward (0.0 to 1.0) added in the direction of the heading error by the TeleOp heading lock, on top of the speed-blended friction feedforward (friction.rot -> ks_moving). The heading lock's PID gains live in casablanca.heading_lock.pid (error in radians -> turn power).",
+              "oneOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                },
+                {
+                  "type": "string",
+                  "pattern": "^(?i)(m|k|mirror|key)?\\s*[+\\-*/]?\\s*\\d*(\\.\\d+)?$"
+                }
+              ]
+            },
+            "pid": {
+              "type": "object",
+              "properties": {
+                "p": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^(?i)(m|k|mirror|key)?\\s*[+\\-*/]?\\s*\\d*(\\.\\d+)?$"
+                    }
+                  ]
+                },
+                "i": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^(?i)(m|k|mirror|key)?\\s*[+\\-*/]?\\s*\\d*(\\.\\d+)?$"
+                    }
+                  ]
+                },
+                "d": {
+                  "oneOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^(?i)(m|k|mirror|key)?\\s*[+\\-*/]?\\s*\\d*(\\.\\d+)?$"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "p",
+                "i",
+                "d"
+              ]
             }
           },
           "required": [
@@ -966,7 +1023,9 @@
             "moving_speed_threshold",
             "max_power",
             "error_deadband_deg",
-            "settle_rate_dps"
+            "settle_rate_dps",
+            "static_ff",
+            "pid"
           ]
         }
       },
@@ -986,7 +1045,7 @@
       "type": "object",
       "properties": {
         "use_ftc_pid": {
-          "description": "When true, uses the REV firmware velocity PID on the motor (RUN_USING_ENCODER with setVelocity, gains from shooter.motor_pidf). When false, uses the custom Pedro PIDF controller, anti-windup integrator, and voltage compensation (RUN_WITHOUT_ENCODER, gains from shooter.pidf).",
+          "description": "When true, uses the REV firmware velocity PID on the motor (RUN_USING_ENCODER with setVelocity, gains from shooter.motor_pidf). When false, uses the software Pedro PID controller (Controller.pid), anti-windup integrator, and voltage compensation (RUN_WITHOUT_ENCODER, gains from shooter.pidf).",
           "type": "boolean"
         },
         "ks": {
@@ -1275,7 +1334,7 @@
           ]
         },
         "motor_pidf": {
-          "description": "REV firmware velocity PIDF (p, i, d, f) applied directly to the flywheel motors via DcMotorEx.setPIDFCoefficients when shooter.use_ftc_pid is true. Distinct from shooter.pidf, which only feeds the software PIDFController used when use_ftc_pid is false and is never sent to the motor. Keep i at 0 here: a live integral on the motor firmware winds up during a feed's velocity sag and overshoots the setpoint once the ball leaves, which is what stalled the third shot of a magazine.",
+          "description": "REV firmware velocity PIDF (p, i, d, f) applied directly to the flywheel motors via DcMotorEx.setPIDFCoefficients when shooter.use_ftc_pid is true. Distinct from shooter.pidf, which only feeds the software Pedro PID controller used when use_ftc_pid is false and is never sent to the motor. Keep i at 0 here: a live integral on the motor firmware winds up during a feed's velocity sag and overshoots the setpoint once the ball leaves, which is what stalled the third shot of a magazine.",
           "type": "object",
           "properties": {
             "p": {

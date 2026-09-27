@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.utilities;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 
 /**
  * The ray that calibration OpModes walk out along from a goal, and the legal drive box bounding it.

@@ -6,9 +6,10 @@ import static com.pedropathing.ivy.commands.Commands.waitUntil;
 import static com.pedropathing.ivy.groups.Groups.race;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.CommandBuilder;
+import com.pedropathing.math.Pose;
+import com.pedropathing.math.Velocity;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -31,7 +32,7 @@ public class ShotController {
   private final Turret turret;
   private final Intake intake;
   private final Supplier<Pose> poseSupplier;
-  private final Supplier<Pose> velocitySupplier;
+  private final Supplier<Velocity> velocitySupplier;
   private final Casablanca casablanca;
   private final Alliance alliance;
   private final Telemetry telemetry;
@@ -75,7 +76,7 @@ public class ShotController {
       Turret turret,
       Intake intake,
       Supplier<Pose> poseSupplier,
-      Supplier<Pose> velocitySupplier,
+      Supplier<Velocity> velocitySupplier,
       Casablanca casablanca,
       Alliance alliance,
       Telemetry telemetry) {
@@ -203,10 +204,10 @@ public class ShotController {
     return Command.build()
         .setStart(
             () -> {
-              follower.holdPoint(follower.getPose());
+              follower.hold(follower.pose(), true);
               startShot(Shooter.constantPower(), true);
             })
-        .setDone(() -> !sentinel.isLaunchAllowed(follower.getPose()))
+        .setDone(() -> !sentinel.isLaunchAllowed(follower.pose()))
         .setEnd(interrupted -> stopShot())
         .requiring(follower, shooter, turret, intake);
   }
@@ -217,7 +218,7 @@ public class ShotController {
             race(
                 aimAndShootCommand(follower, sentinel),
                 waitUntil(() -> ballsFired >= config.auto.balls_per_shot_count),
-                waitMs(ShotTimeTable.windowMsFor(targetRpmAt(follower.getPose())))));
+                waitMs(ShotTimeTable.windowMsFor(targetRpmAt(follower.pose())))));
   }
 
   public int shotWindowMsAt(Pose pose) {
@@ -225,8 +226,7 @@ public class ShotController {
   }
 
   private double distanceToGoal(Pose pose) {
-    return Math.hypot(
-        Field.getGoalY(alliance) - pose.getY(), Field.getGoalX(alliance) - pose.getX());
+    return Math.hypot(Field.getGoalY(alliance) - pose.y(), Field.getGoalX(alliance) - pose.x());
   }
 
   private double targetRpmAt(Pose pose) {
@@ -339,7 +339,7 @@ public class ShotController {
 
   public void periodic() {
     Pose pose = poseSupplier != null ? poseSupplier.get() : null;
-    Pose vel = velocitySupplier != null ? velocitySupplier.get() : new Pose(0, 0, 0);
+    Velocity vel = velocitySupplier != null ? velocitySupplier.get() : Velocity.zero();
 
     boolean needSolve =
         active

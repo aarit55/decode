@@ -5,11 +5,12 @@ import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 import static org.firstinspires.ftc.teamcode.auto.PathUtil.pline;
 
 import com.bylazar.field.FieldManager;
+import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.CommandBuilder;
 import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import java.util.Locale;
@@ -101,7 +102,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
 
     org.firstinspires.ftc.teamcode.records.ShotInputs inputs =
         new org.firstinspires.ftc.teamcode.records.ShotInputs(
-            scorePose, new Pose(0, 0, 0), goalX, goalY);
+            scorePose, com.pedropathing.math.Velocity.zero(), goalX, goalY);
     org.firstinspires.ftc.teamcode.records.ShotSolution solution =
         org.firstinspires.ftc.teamcode.ballistics.ShotSolver.solve(
             inputs,
@@ -135,7 +136,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     OpModeUtil.setupTurretAndShooter(turret, shooter);
     primeShooterForScorePose(config);
 
-    follower.setStartingPose(startPose);
+    follower.setPose(startPose);
     buildPaths();
     Scheduler.reset();
   }
@@ -156,12 +157,12 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     updateEndgame();
     robot.update();
 
-    OpModeUtil.savePose(alliance, follower.getPose());
+    OpModeUtil.savePose(alliance, follower.pose());
     OpModeUtil.drawRobot(field, follower, turret, goalX, goalY);
 
-    telemetry.addData("x", follower.getPose().getX());
-    telemetry.addData("y", follower.getPose().getY());
-    telemetry.addData("heading", follower.getPose().getHeading());
+    telemetry.addData("x", follower.pose().x());
+    telemetry.addData("y", follower.pose().y());
+    telemetry.addData("heading", follower.pose().heading());
     telemetry.addData(
         "Endgame",
         "%s  (%.1f s left)",
@@ -185,7 +186,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     }
 
     Sentinel.ZoneStanding standing =
-        sentinel.zoneStanding(follower.getPose(), endgame().exit_clearance);
+        sentinel.zoneStanding(follower.pose(), endgame().exit_clearance);
 
     if (!frozen
         && (standing != Sentinel.ZoneStanding.ON_BOUNDARY || remainingMs <= endgame().freeze_ms)) {
@@ -194,7 +195,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     if (frozen) {
       endgameStatus = (shootingOut ? "frozen, shooting - " : "frozen - ") + standing;
       if (!shootingOut) {
-        follower.setTeleOpDrive(0, 0, 0);
+        follower.manual(DrivePowers.zero());
       }
     }
   }
@@ -207,9 +208,9 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     robot.shotController.stopShot();
     intake.stop();
     turret.setAimMode(Turret.AimMode.IDLE);
-    follower.breakFollowing();
+    follower.stop();
 
-    Pose here = follower.getPose();
+    Pose here = follower.pose();
     EndgameSpot spot = sentinel.nearestEndgameSpot(here, endgame().exit_clearance);
 
     if (spot == null) {
@@ -225,9 +226,9 @@ public abstract class AllianceAutoBase<T> extends OpMode {
         String.format(
             Locale.ROOT,
             "moving %.1f in to (%.0f, %.0f), %s",
-            here.distanceFrom(spot.pose()),
-            spot.pose().getX(),
-            spot.pose().getY(),
+            here.distance(spot.pose()),
+            spot.pose().x(),
+            spot.pose().y(),
             spot.insideLaunchZone() ? "inside zone" : "outside zones");
     schedule(follow(follower, pline(here, spot.pose())));
   }
@@ -237,7 +238,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     Scheduler.reset();
     intake.stop();
     robot.shotController.stopShot();
-    follower.breakFollowing();
+    follower.stop();
 
     shootingOut = standing == Sentinel.ZoneStanding.INSIDE;
     if (shootingOut) {
@@ -247,8 +248,7 @@ public abstract class AllianceAutoBase<T> extends OpMode {
 
     shooter.setTargetPower(0);
     turret.setAimMode(Turret.AimMode.IDLE);
-    follower.startTeleopDrive();
-    follower.setTeleOpDrive(0, 0, 0);
+    follower.manual(DrivePowers.zero());
   }
 
   private void addShooterDiagnostics() {
@@ -277,9 +277,9 @@ public abstract class AllianceAutoBase<T> extends OpMode {
     telemetry.addData("Hood", shooter.getTargetHoodPosition());
     telemetry.addData(
         "Launch Legal",
-        sentinel.isLaunchAllowed(follower.getPose()) ? "yes" : "NO - a shot here would not fire");
+        sentinel.isLaunchAllowed(follower.pose()) ? "yes" : "NO - a shot here would not fire");
     telemetry.addData(
-        "Shoot Window Here", "%d ms", robot.shotController.shotWindowMsAt(follower.getPose()));
+        "Shoot Window Here", "%d ms", robot.shotController.shotWindowMsAt(follower.pose()));
 
     var solution = robot.shotController.getLastSolution();
     telemetry.addData(

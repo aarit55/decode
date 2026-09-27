@@ -16,7 +16,8 @@ Follow these coding and design standards in the `decode` codebase:
 2. **Prefer Libraries Over Custom Implementations**:
    - Never write custom code for something a library can already do — even if that library is not yet installed. Identify and add the appropriate dependency first.
    - Use JTS Topology Suite (`org.locationtech.jts.geom.Coordinate`, `Envelope`, `Polygon`) for 2D spatial geometry and polygon intersections instead of custom record types.
-   - Use Pedro Pathing's `com.pedropathing.control.PIDFController` and `PIDFCoefficients` instead of any custom PID/PIDF implementations.
+   - Use Pedro Pathing 3's `com.pedropathing.controllers.Controller` factories (`Controller.pid`, `Controller.staticFeedforward`, `Controller.sum`, ...) instead of any custom PID/PIDF implementation. A static feedforward term is `Controller.sum(pid, Controller.staticFeedforward(...))`, not a hand-added `f * signum(error)`.
+   - Use Pedro 3's own types and helpers instead of re-creating Pedro 2 APIs: `Velocity`/`Twist` for velocities (never a `Pose` holding velocity), `follower.manual(...)` + `ManualDrive.fieldCentric(...)` for driver control, `Foresight.getBrakeDisplacement(...)` for stopping-distance prediction, and `PoseFactory` for pose mirroring.
    - Use FTC SDK's `org.firstinspires.ftc.robotcore.external.navigation.AngleUnit` normalization methods instead of custom modulo math.
    - Applies to PID controllers, geometry types, angle math, data structures, interpolation, collections, and anything else with a well-supported library equivalent.
 
@@ -29,7 +30,7 @@ Follow these coding and design standards in the `decode` codebase:
    - Commands, `ShotController`, and OpModes must only set *target* state (`setTargetPower`, `setAimMode`, `setHoldAngle`, ...) — never call a raw hardware-writing method (e.g. a motor's `setPower`/`setVelocity`) from outside a subsystem's own `periodic()`. Direct writes that bypass `periodic()` get silently overwritten on the next loop and have caused real regressions (a manual-rev button that appeared to do nothing because `periodic()` reverted it one loop later).
 
 5. **Dependency Injection Over Static Global State**:
-   - Per-match state (current alliance, goal coordinates, starting poses) is threaded through explicit constructor parameters — `Sentinel(Alliance)`, `Casablanca(Sentinel)`, `Robot(HardwareMap, Telemetry, MatchProfile)` — not mutable public static fields.
+   - Per-match state (current alliance, goal coordinates, starting poses) is threaded through explicit constructor parameters — `Sentinel(Alliance)`, `Casablanca(Sentinel, Foresight)`, `Robot(HardwareMap, Telemetry, MatchProfile)` — not mutable public static fields.
    - Do not reintroduce a static "current alliance" or "current match" holder. A prior static-global design caused an initialization-ordering bug where `Sentinel` captured the wrong alliance depending on which OpMode constructed it first; constructor injection makes that class of bug structurally impossible and makes the safety/geometry classes independently unit-testable.
 
 6. **Safety & Collision Avoidance**:

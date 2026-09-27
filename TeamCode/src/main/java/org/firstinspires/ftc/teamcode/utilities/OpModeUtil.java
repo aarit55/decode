@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.utilities;
 import com.bylazar.field.FieldManager;
 import com.bylazar.field.PanelsField;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.robot.Shooter;
@@ -43,9 +43,9 @@ public final class OpModeUtil {
       FieldManager field, Follower follower, Turret turret, double goalX, double goalY) {
     DrawingUtil.drawRobotOnField(
         field,
-        follower.getPose().getX(),
-        follower.getPose().getY(),
-        follower.getPose().getHeading(),
+        follower.pose().x(),
+        follower.pose().y(),
+        follower.pose().heading(),
         Math.toRadians(turret.getCurrentTurnAngle()),
         goalX,
         goalY);

@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.utilities;
 
 import com.bylazar.configurables.annotations.Configurable;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.records.EndgameSpot;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
@@ -98,8 +98,7 @@ public class Sentinel {
     Geometry fullyOutside = ownHalf.difference(zones.buffer(reach, ARC_SEGMENTS));
     Geometry fullyInside = ownHalf.intersection(zones.buffer(-reach, ARC_SEGMENTS));
 
-    Point here =
-        GEOMETRY_FACTORY.createPoint(new Coordinate(currentPose.getX(), currentPose.getY()));
+    Point here = GEOMETRY_FACTORY.createPoint(new Coordinate(currentPose.x(), currentPose.y()));
 
     Coordinate outTarget = nearestCoordinate(fullyOutside, here);
     Coordinate inTarget = nearestCoordinate(fullyInside, here);
@@ -115,7 +114,7 @@ public class Sentinel {
                     < here.getCoordinate().distance(outTarget));
 
     Coordinate target = takeInside ? inTarget : outTarget;
-    return new EndgameSpot(new Pose(target.x, target.y, currentPose.getHeading()), takeInside);
+    return new EndgameSpot(new Pose(target.x, target.y, currentPose.heading()), takeInside);
   }
 
   private Coordinate nearestCoordinate(Geometry region, Point from) {
@@ -147,7 +146,7 @@ public class Sentinel {
   public boolean isRotationSafe(Pose currentPose, double turnInput, double lookaheadRad) {
     double predictedDelta = Math.signum(turnInput) * lookaheadRad;
     Pose futurePose =
-        new Pose(currentPose.getX(), currentPose.getY(), currentPose.getHeading() + predictedDelta);
+        new Pose(currentPose.x(), currentPose.y(), currentPose.heading() + predictedDelta);
 
     Coordinate[] futureFootprint = calculateRobotFootprint(futurePose);
     Coordinate[] currentFootprint = calculateRobotFootprint(currentPose);
@@ -168,9 +167,9 @@ public class Sentinel {
   }
 
   private Coordinate[] calculateFootprint(Pose pose, double width) {
-    double heading = pose.getHeading();
-    double centerX = pose.getX();
-    double centerY = pose.getY();
+    double heading = pose.heading();
+    double centerX = pose.x();
+    double centerY = pose.y();
     double cos = Math.cos(heading);
     double sin = Math.sin(heading);
     double radius = width / 2.0;
