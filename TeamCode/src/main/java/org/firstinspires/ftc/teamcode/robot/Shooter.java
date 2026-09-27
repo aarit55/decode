@@ -1,8 +1,8 @@
 package org.firstinspires.ftc.teamcode.robot;
 
 import com.bylazar.configurables.annotations.Configurable;
-import com.pedropathing.control.PIDFCoefficients;
-import com.pedropathing.control.PIDFController;
+import com.pedropathing.controllers.Controller;
+import com.pedropathing.controllers.PIDController;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -20,8 +20,7 @@ public class Shooter {
   private final DcMotorEx shooter2;
   private final Servo hood;
   private final VoltageSensor voltageSensor;
-  private final PIDFController pidfController;
-  private final PIDFCoefficients coefficients;
+  private final PIDController pidController;
   private final AntiWindupIntegrator integrator = new AntiWindupIntegrator();
   private final ElapsedTime loopTimer = new ElapsedTime();
   private final ElapsedTime voltageTimer = new ElapsedTime();
@@ -61,10 +60,9 @@ public class Shooter {
     shooter2.setMode(initialMode);
     shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
 
-    coefficients =
-        new PIDFCoefficients(
-            config.shooter.pidf.p, 0.0, config.shooter.pidf.d, config.shooter.pidf.f);
-    pidfController = new PIDFController(coefficients);
+    // I is deliberately 0 here: the integral is handled by the anti-windup integrator below.
+    // F is not used by this loop either; feedforward is the separate ff term in periodic().
+    pidController = Controller.pid(config.shooter.pidf.p, 0.0, config.shooter.pidf.d);
 
     setShooterPIDFCoefficients();
 
@@ -73,8 +71,9 @@ public class Shooter {
   }
 
   public final void setShooterPIDFCoefficients() {
-    coefficients.setCoefficients(
-        config.shooter.pidf.p, 0.0, config.shooter.pidf.d, config.shooter.pidf.f);
+    pidController.kP = config.shooter.pidf.p;
+    pidController.kI = 0.0;
+    pidController.kD = config.shooter.pidf.d;
 
     if (config.shooter.use_ftc_pid) {
       shooter1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, config.shooter.motor_pidf);
@@ -93,8 +92,8 @@ public class Shooter {
       shooter1.setVelocity(0);
       shooter2.setVelocity(0);
     }
-    if (pidfController != null) {
-      pidfController.reset();
+    if (pidController != null) {
+      pidController.reset();
     }
     integrator.reset();
     lastSaturationSign = 0;
@@ -158,9 +157,7 @@ public class Shooter {
           shooter2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
-        pidfController.setTargetPosition(targetVel);
-        pidfController.updatePosition(currentVel);
-        double pidOutput = pidfController.run();
+        double pidOutput = pidController.calculate(0.0, targetVel - currentVel);
 
         double error = targetVel - currentVel;
         double integralTerm =

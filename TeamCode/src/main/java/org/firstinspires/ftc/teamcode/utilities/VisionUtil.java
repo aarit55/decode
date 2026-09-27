@@ -1,10 +1,7 @@
 package org.firstinspires.ftc.teamcode.utilities;
 
 import android.util.Size;
-import com.pedropathing.ftc.InvertedFTCCoordinates;
-import com.pedropathing.ftc.PoseConverter;
-import com.pedropathing.geometry.PedroCoordinates;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import java.util.List;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -18,6 +15,7 @@ import org.firstinspires.ftc.teamcode.robot.config.generated.config;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 
 public class VisionUtil {
 
@@ -71,8 +69,12 @@ public class VisionUtil {
 
     Pose newPose = null;
     for (AprilTagDetection detection : currentDetections) {
-      if (detection != null && detection.metadata != null && detection.robotPose != null) {
-        if (!detection.metadata.name.contains("Obelisk")) {
+      // SDK 12 split detections into single tags and tag clusters; only single tags carry the
+      // per-tag metadata this filter needs.
+      if (detection instanceof AprilTagSingleDetection single
+          && single.metadata != null
+          && single.robotPose != null) {
+        if (!single.metadata.name.contains("Obelisk")) {
           tagFound = true;
           double detectedX = detection.robotPose.getPosition().x;
           double detectedY = detection.robotPose.getPosition().y;
@@ -80,12 +82,12 @@ public class VisionUtil {
           Pose2D visionPose =
               new Pose2D(
                   DistanceUnit.INCH, detectedX, detectedY, AngleUnit.RADIANS, headingRadians);
-          Pose pedroPose =
-              PoseConverter.pose2DToPose(visionPose, InvertedFTCCoordinates.INSTANCE)
-                  .getAsCoordinateSystem(PedroCoordinates.INSTANCE);
-          double fieldX = pedroPose.getX() < 0 ? -pedroPose.getX() + 72 : 72 - pedroPose.getX();
-          double fieldY = pedroPose.getY() < 0 ? -pedroPose.getY() + 72 : 72 - pedroPose.getY();
-          newPose = new Pose(fieldX, fieldY, headingRadians);
+
+          double fieldX = visionPose.getY(DistanceUnit.INCH) + 72;
+          double fieldY = 72 - visionPose.getX(DistanceUnit.INCH);
+          double fieldHeading = visionPose.getHeading(AngleUnit.RADIANS) - Math.PI / 2;
+
+          newPose = new Pose(fieldX, fieldY, fieldHeading);
           break;
         }
       }

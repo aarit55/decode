@@ -1,41 +1,31 @@
 package org.firstinspires.ftc.teamcode.auto;
 
-import com.pedropathing.geometry.BezierCurve;
-import com.pedropathing.geometry.BezierLine;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.api.Paths;
+import com.pedropathing.math.Pose;
 import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
 
-/**
- * Concise utilities for constructing Pedro Pathing {@link Path} and {@link PathChain} instances
- * directly, bypassing the verbose {@code follower.pathBuilder()} wrapper while preserving exact
- * linear heading interpolation behavior.
- */
+/** Concise utilities for constructing Pedro Pathing 3 paths. */
 public final class PathUtil {
 
   private PathUtil() {}
 
-  public static PathChain pline(Pose start, Pose end) {
-    Path path = new Path(new BezierLine(start, end));
-    path.setLinearHeadingInterpolation(start.getHeading(), end.getHeading());
-    return new PathChain(path);
+  /** Straight line, heading interpolated linearly from start to end over the whole path. */
+  public static Path pline(Pose start, Pose end) {
+    return Paths.line(start, end).linear(start, end);
   }
 
-  public static PathChain pline(Pose start, Pose end, double headingEndTime) {
-    Path path = new Path(new BezierLine(start, end));
-    path.setLinearHeadingInterpolation(start.getHeading(), end.getHeading(), headingEndTime);
-    return new PathChain(path);
+  /** Straight line, heading reaches the end heading at {@code headingEndTime} (0..1). */
+  public static Path pline(Pose start, Pose end, double headingEndTime) {
+    return Paths.line(start, end).linear(start, end, headingEndTime);
   }
 
-  public static PathChain pcurve(Pose start, Pose controlPoint, Pose end) {
-    Path path = new Path(new BezierCurve(start, controlPoint, end));
-    path.setLinearHeadingInterpolation(start.getHeading(), end.getHeading());
-    return new PathChain(path);
+  /** Quadratic Bezier through one control point, linear heading over the whole path. */
+  public static Path pcurve(Pose start, Pose controlPoint, Pose end) {
+    return Paths.curve(start, controlPoint, end).linear(start, end);
   }
 
-  public static PathChain pcurve(Pose start, Pose controlPoint, Pose end, double headingEndTime) {
-    Path path = new Path(new BezierCurve(start, controlPoint, end));
-    path.setLinearHeadingInterpolation(start.getHeading(), end.getHeading(), headingEndTime);
-    return new PathChain(path);
+  /** Quadratic Bezier, heading reaches the end heading at {@code headingEndTime} (0..1). */
+  public static Path pcurve(Pose start, Pose controlPoint, Pose end, double headingEndTime) {
+    return Paths.curve(start, controlPoint, end).linear(start, end, headingEndTime);
   }
 }

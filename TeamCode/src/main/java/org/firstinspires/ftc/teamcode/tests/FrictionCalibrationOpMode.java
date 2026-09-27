@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.tests;
 
 import com.bylazar.configurables.annotations.Configurable;
+import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -45,8 +46,8 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
       module.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
     }
 
-    follower = Constants.createFollower(hardwareMap);
-    follower.startTeleopDrive();
+    follower = Constants.create(hardwareMap);
+    follower.manual(DrivePowers.zero());
 
     telemetry.addLine("Friction Auto-Calibration initialized.");
     telemetry.addLine("Place robot on open carpet with plenty of space!");
@@ -100,7 +101,7 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
   private void settleLocalizer() throws InterruptedException {
     for (int i = 0; i < 15 && opModeIsActive() && !isStopRequested(); i++) {
       clearBulkCache();
-      follower.setTeleOpDrive(0.0, 0.0, 0.0, true);
+      follower.manual(0.0, 0.0, 0.0);
       follower.update();
       sleep(10);
     }
@@ -119,9 +120,9 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
       follower.update();
 
       power += 0.0003;
-      follower.setTeleOpDrive(power, 0.0, 0.0, true);
+      follower.manual(power, 0.0, 0.0);
 
-      double currentVelocity = follower.getVelocity().getMagnitude();
+      double currentVelocity = follower.velocity().toVector2D().magnitude();
 
       if (currentVelocity > velocityThresholdInchesPerSec) {
         consecutiveMovingFrames++;
@@ -160,9 +161,9 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
       follower.update();
 
       power += 0.0003;
-      follower.setTeleOpDrive(0.0, power, 0.0, true);
+      follower.manual(0.0, power, 0.0);
 
-      double currentVelocity = follower.getVelocity().getMagnitude();
+      double currentVelocity = follower.velocity().toVector2D().magnitude();
 
       if (currentVelocity > velocityThresholdInchesPerSec) {
         consecutiveMovingFrames++;
@@ -202,9 +203,9 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
       follower.update();
 
       power += 0.0003;
-      follower.setTeleOpDrive(0.0, 0.0, power, true);
+      follower.manual(0.0, 0.0, power);
 
-      double currentVelocity = Math.abs(follower.getAngularVelocity());
+      double currentVelocity = Math.abs(follower.velocity().omega);
 
       if (currentVelocity > angularVelocityThresholdRadPerSec) {
         consecutiveMovingFrames++;
@@ -238,7 +239,7 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
     double steadyForwardPower = 0.5;
     for (int i = 0; i < 50 && opModeIsActive() && !isStopRequested(); i++) {
       clearBulkCache();
-      follower.setTeleOpDrive(steadyForwardPower, 0.0, 0.0, true);
+      follower.manual(steadyForwardPower, 0.0, 0.0);
       follower.update();
       sleep(10);
     }
@@ -251,9 +252,9 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
       follower.update();
 
       power += 0.0003;
-      follower.setTeleOpDrive(steadyForwardPower, 0.0, power, true);
+      follower.manual(steadyForwardPower, 0.0, power);
 
-      double currentVelocity = Math.abs(follower.getAngularVelocity());
+      double currentVelocity = Math.abs(follower.velocity().omega);
 
       if (currentVelocity > angularVelocityThresholdRadPerSec) {
         consecutiveMovingFrames++;
@@ -287,10 +288,10 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
     double maxObservedOmega = 0.0;
     for (int i = 0; i < 100 && opModeIsActive() && !isStopRequested(); i++) {
       clearBulkCache();
-      follower.setTeleOpDrive(0.0, 0.0, 1.0, true);
+      follower.manual(0.0, 0.0, 1.0);
       follower.update();
 
-      double omega = Math.abs(follower.getAngularVelocity());
+      double omega = Math.abs(follower.velocity().omega);
       if (omega > maxObservedOmega) {
         maxObservedOmega = omega;
       }
@@ -309,18 +310,18 @@ public class FrictionCalibrationOpMode extends LinearOpMode {
   }
 
   private void stopRobot() throws InterruptedException {
-    follower.setTeleOpDrive(0.0, 0.0, 0.0, true);
+    follower.manual(0.0, 0.0, 0.0);
     follower.update();
 
     telemetry.addLine("Test Complete! Stopping robot...");
     telemetry.update();
 
     while (opModeIsActive()
-        && (follower.getVelocity().getMagnitude() > 0.05
-            || Math.abs(follower.getAngularVelocity()) > 0.005)) {
+        && (follower.velocity().toVector2D().magnitude() > 0.05
+            || Math.abs(follower.velocity().omega) > 0.005)) {
       clearBulkCache();
       follower.update();
-      follower.setTeleOpDrive(0.0, 0.0, 0.0, true);
+      follower.manual(0.0, 0.0, 0.0);
       sleep(10);
     }
 

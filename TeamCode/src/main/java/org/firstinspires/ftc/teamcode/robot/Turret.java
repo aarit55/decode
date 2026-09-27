@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.robot;
 
-import com.pedropathing.control.PIDFCoefficients;
-import com.pedropathing.control.PIDFController;
+import com.pedropathing.controllers.Controller;
+import com.pedropathing.controllers.PIDController;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -29,8 +29,8 @@ public class Turret {
   private final AnalogInput turnAnalog;
   private final Telemetry telemetry;
 
-  private final PIDFCoefficients pidfCoefficients;
-  private final PIDFController pidfController;
+  private final PIDController pidController;
+  private final Controller controller;
 
   private double targetTurnAngle = 0;
   private boolean isTurnDone = false;
@@ -50,7 +50,7 @@ public class Turret {
   private double manualPower = 0.0;
 
   public Turret(HardwareMap hardwareMap, Telemetry telemetry, Follower follower) {
-    this(hardwareMap, telemetry, follower::getPose);
+    this(hardwareMap, telemetry, follower::pose);
   }
 
   public Turret(HardwareMap hardwareMap, Telemetry telemetry) {
@@ -74,8 +74,8 @@ public class Turret {
 
     reloadFromConfig();
 
-    pidfCoefficients = new PIDFCoefficients(p, i, d, f);
-    pidfController = new PIDFController(pidfCoefficients);
+    pidController = Controller.pid(p, i, d);
+    controller = Controller.sum(pidController, Controller.staticFeedforward(() -> f));
 
     if (config.turret != null && config.turret.analog_encoder != null) {
       this.zeroVoltageOffset = config.turret.analog_encoder.zero_voltage;
@@ -95,7 +95,7 @@ public class Turret {
       this.maxPower = config.turret.max_power_output;
     }
     // Null during the constructor's own call, before the coefficients exist.
-    if (pidfCoefficients != null) {
+    if (pidController != null) {
       applyPIDFCoefficients();
     }
   }
@@ -146,7 +146,10 @@ public class Turret {
   }
 
   private void applyPIDFCoefficients() {
-    pidfCoefficients.setCoefficients(p, i, d, f);
+    // f is read live by the static-feedforward half of the controller.
+    pidController.kP = p;
+    pidController.kI = i;
+    pidController.kD = d;
   }
 
   private double zeroVoltageOffset = 0.0;
@@ -481,10 +484,7 @@ public class Turret {
     }
 
     applyPIDFCoefficients();
-    pidfController.setTargetPosition(relativeTargetAngle);
-    pidfController.updatePosition(relativeTurretAngle);
-    pidfController.updateFeedForwardInput(Math.signum(error));
-    double pidOutput = pidfController.run();
+    double pidOutput = controller.calculate(0.0, relativeTargetAngle - relativeTurretAngle);
     double command = Math.clamp(pidOutput + feedforward, -maxPower, maxPower);
 
     updateRunawayWatchdog(relativeTargetAngle, error, command);
@@ -494,14 +494,14 @@ public class Turret {
     if (absError <= tolerance || isBoundaryViolated) {
       setTurretPowerRaw(0);
       isTurnDone = absError <= tolerance;
-      pidfController.reset();
+      controller.reset();
     } else {
       isTurnDone = false;
       setTurretPowerRaw(command);
     }
 
     if (telemetry != null) {
-      telemetry.addData("Robot Heading", Math.toDegrees(currentPose.getHeading()));
+      telemetry.addData("Robot Heading", Math.toDegrees(currentPose.heading()));
       telemetry.addData("Target Relative", relativeTargetAngle);
       telemetry.addData("Turret Relative", relativeTurretAngle);
       telemetry.addData("Turret Power", turnServo != null ? turnServo.getPower() : 0.0);
@@ -519,7 +519,7 @@ public class Turret {
   }
 
   private double distanceToGoal(Pose currentPose) {
-    return Math.hypot(goalX - currentPose.getX(), goalY - currentPose.getY());
+    return Math.hypot(goalX - currentPose.x(), goalY - currentPose.y());
   }
 
   public double getTargetTurnAngle() {
@@ -580,11 +580,11 @@ public class Turret {
           if (!Double.isNaN(targetAzimuthRad)) {
             worldBearingDegrees = Math.toDegrees(targetAzimuthRad);
           } else {
-            double deltaX = goalX - pose.getX();
-            double deltaY = goalY - pose.getY();
+            double deltaX = goalX - pose.x();
+            double deltaY = goalY - pose.y();
             worldBearingDegrees = Math.toDegrees(Math.atan2(deltaY, deltaX));
           }
-          double robotWorldHeadingDegrees = Math.toDegrees(pose.getHeading());
+          double robotWorldHeadingDegrees = Math.toDegrees(pose.heading());
           setTargetTurnAngle(
               AngleUnit.normalizeDegrees(worldBearingDegrees - robotWorldHeadingDegrees));
           updateTurret(pose);

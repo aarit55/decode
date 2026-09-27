@@ -3,10 +3,12 @@ package org.firstinspires.ftc.teamcode.teleop;
 import com.bylazar.field.FieldManager;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import java.util.Locale;
@@ -111,7 +113,7 @@ public abstract class TeleOpBase extends OpMode {
     telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
 
     Pose savedPose = OpModeUtil.getSavedPose(alliance, profile.startPose());
-    follower.setStartingPose(savedPose);
+    follower.setPose(savedPose);
 
     robot.vision.initAprilTag(hardwareMap, true);
     casablanca.reset();
@@ -124,7 +126,7 @@ public abstract class TeleOpBase extends OpMode {
     double maxSpeed = config.teleop.max_speed;
     teleOpDriveCommand =
         Command.build()
-            .setStart(() -> follower.startTeleopDrive())
+            .setStart(() -> follower.manual(DrivePowers.zero()))
             .setExecute(
                 () -> {
                   double y = Math.clamp(-Math.pow(driver.left_stick_y, 3), -maxSpeed, maxSpeed);
@@ -133,14 +135,16 @@ public abstract class TeleOpBase extends OpMode {
 
                   double[] adjusted =
                       casablanca.adjustDriveInput(
-                          follower.getPose(),
-                          follower.getVelocity(),
-                          follower.getAngularVelocity(),
+                          follower.pose(),
+                          follower.velocity().toVector2D(),
+                          follower.velocity().omega,
                           x,
                           y,
                           r,
                           -driver.right_stick_x);
-                  follower.setTeleOpDrive(adjusted[1], adjusted[0], adjusted[2], false);
+                  follower.manual(
+                      ManualDrive.fieldCentric(
+                          adjusted[1], adjusted[0], adjusted[2], follower.pose().heading()));
                 })
             .requiring(follower);
 
@@ -149,7 +153,7 @@ public abstract class TeleOpBase extends OpMode {
 
   @Override
   public void start() {
-    follower.startTeleopDrive();
+    follower.manual(DrivePowers.zero());
     OpModeUtil.setupTurretAndShooter(turret, shooter);
     teleOpDriveCommand.schedule();
   }
@@ -189,10 +193,10 @@ public abstract class TeleOpBase extends OpMode {
     OpModeUtil.drawRobot(field, follower, turret, profile.goalX(), profile.goalY());
     DrawingUtil.drawCasablancaZones(field, sentinel);
 
-    OpModeUtil.savePose(profile.alliance(), follower.getPose());
+    OpModeUtil.savePose(profile.alliance(), follower.pose());
 
     telemetryM.addData("Alliance", profile.alliance());
-    telemetryM.addData("Pose", follower.getPose());
+    telemetryM.addData("Pose", follower.pose());
     telemetryM.addData("Drive Mode", Casablanca.fieldCentric ? "FIELD-CENTRIC" : "ROBOT-CENTRIC");
     telemetryM.addData(
         "Heading Lock", casablanca.isGoalHeadingLockActive() ? "GOAL (driver X)" : "last heading");
@@ -224,11 +228,11 @@ public abstract class TeleOpBase extends OpMode {
         follower.setPose(visionPose);
         telemetryM.addLine(
             "Pose updated: X="
-                + String.format(Locale.ROOT, "%.2f", visionPose.getX())
+                + String.format(Locale.ROOT, "%.2f", visionPose.x())
                 + " Y="
-                + String.format(Locale.ROOT, "%.2f", visionPose.getY())
+                + String.format(Locale.ROOT, "%.2f", visionPose.y())
                 + " H="
-                + String.format(Locale.ROOT, "%.2f", Math.toDegrees(visionPose.getHeading())));
+                + String.format(Locale.ROOT, "%.2f", Math.toDegrees(visionPose.heading())));
         robot.vision.stopStreaming();
       } else {
         telemetryM.addData("Vision [On-Demand]", "Searching for Tag...");

@@ -2,7 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import static org.junit.Assert.assertNotNull;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.teamcode.config.ConfigLoader;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.records.MatchProfile;

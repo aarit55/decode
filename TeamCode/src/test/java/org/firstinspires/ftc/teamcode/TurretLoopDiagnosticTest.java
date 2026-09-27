@@ -5,7 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -151,9 +151,9 @@ public class TurretLoopDiagnosticTest {
   }
 
   /**
-   * Guards the live-tuner bug: {@code PIDFController.run()} re-reads its gains from the supplier it
-   * was constructed with, so handing it a brand new coefficients object had no effect and the
-   * turret kept driving on the gains baked in at construction even with every dashboard gain at 0.
+   * Guards the live-tuner bug: gains set through {@code setPIDF} must reach the controller the
+   * turret actually runs, not a copy baked in at construction, or the turret keeps driving even
+   * with every dashboard gain at 0.
    */
   @Test
   public void zeroedGainsFromTheLiveTunerStopTheTurret() throws InterruptedException {

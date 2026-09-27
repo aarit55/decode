@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.records;
 
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Pose;
 
 /**
  * Where the robot should sit out the end of autonomous, and which side of the launch zone boundary

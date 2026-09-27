@@ -5,7 +5,9 @@ import com.bylazar.field.FieldManager;
 import com.bylazar.field.PanelsField;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
-import com.pedropathing.geometry.Pose;
+import com.pedropathing.drivetrain.DrivePowers;
+import com.pedropathing.follower.ManualDrive;
+import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -79,7 +81,7 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
         org.firstinspires.ftc.teamcode.robot.config.generated.config.loadMatchProfile(
             Alliance.BLUE);
     robot = new Robot(hardwareMap, telemetry, profile);
-    robot.follower.setStartingPose(START_POSE);
+    robot.follower.setPose(START_POSE);
 
     double blueGoalX = org.firstinspires.ftc.teamcode.records.Field.getBlueGoalX();
     double blueGoalY = org.firstinspires.ftc.teamcode.records.Field.getBlueGoalY();
@@ -125,7 +127,7 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
         }
 
         Pose targetPose = CalibrationRay.waypoint(gx, gy, distance);
-        double targetHeadingDeg = Math.toDegrees(targetPose.getHeading());
+        double targetHeadingDeg = Math.toDegrees(targetPose.heading());
 
         // --- STEP 1: DRIVER CONFIRMATION PROMPT ---
         boolean confirmed = promptDriverConfirmation(distance, targetPose, targetHeadingDeg);
@@ -227,15 +229,15 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
 
       telemetry.addLine("==================================================");
       telemetry.addData("WAYPOINT PROMPT", "Distance = %.1f in", distance);
-      telemetry.addData("Calculated Target X", "%.1f in", targetPose.getX());
-      telemetry.addData("Calculated Target Y", "%.1f in", targetPose.getY());
+      telemetry.addData("Calculated Target X", "%.1f in", targetPose.x());
+      telemetry.addData("Calculated Target Y", "%.1f in", targetPose.y());
       telemetry.addData("Calculated Heading", "%.1f°", headingDeg);
       telemetry.addData(
           "Current Robot Pose",
           "(%.1f, %.1f, %.1f°)",
-          robot.follower.getPose().getX(),
-          robot.follower.getPose().getY(),
-          Math.toDegrees(robot.follower.getPose().getHeading()));
+          robot.follower.pose().x(),
+          robot.follower.pose().y(),
+          Math.toDegrees(robot.follower.pose().heading()));
       telemetry.addLine("==================================================");
       telemetry.addLine("Press A (Cross)  -> CONFIRM & Move Robot");
       telemetry.addLine("Press B (Circle) -> SKIP Waypoint");
@@ -255,15 +257,15 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
   }
 
   private void moveToWaypoint(Pose targetPose) {
-    robot.follower.holdPoint(targetPose);
+    robot.follower.hold(targetPose, true);
 
     telemetry.clearAll();
     telemetry.addData(
         "Moving to Target Pose",
         "(%.1f, %.1f, %.1f°)",
-        targetPose.getX(),
-        targetPose.getY(),
-        Math.toDegrees(targetPose.getHeading()));
+        targetPose.x(),
+        targetPose.y(),
+        Math.toDegrees(targetPose.heading()));
     telemetry.update();
 
     long startTime = System.currentTimeMillis();
@@ -276,38 +278,36 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
       robot.update();
       drawVisuals();
 
-      Pose currentPose = robot.follower.getPose();
+      Pose currentPose = robot.follower.pose();
       double distError =
-          Math.hypot(
-              targetPose.getX() - currentPose.getX(), targetPose.getY() - currentPose.getY());
+          Math.hypot(targetPose.x() - currentPose.x(), targetPose.y() - currentPose.y());
       double angleErrorDeg =
           Math.toDegrees(
-              Math.abs(
-                  AngleUnit.normalizeRadians(targetPose.getHeading() - currentPose.getHeading())));
+              Math.abs(AngleUnit.normalizeRadians(targetPose.heading() - currentPose.heading())));
 
       double gx = org.firstinspires.ftc.teamcode.records.Field.getBlueGoalX();
       double gy = org.firstinspires.ftc.teamcode.records.Field.getBlueGoalY();
-      double actualDist = Math.hypot(gy - currentPose.getY(), gx - currentPose.getX());
+      double actualDist = Math.hypot(gy - currentPose.y(), gx - currentPose.x());
 
       telemetry.addData(
           "Moving to Target",
           "(%.1f, %.1f, %.1f°)",
-          targetPose.getX(),
-          targetPose.getY(),
-          Math.toDegrees(targetPose.getHeading()));
+          targetPose.x(),
+          targetPose.y(),
+          Math.toDegrees(targetPose.heading()));
       telemetry.addData(
           "Current Robot Pose",
           "(%.1f, %.1f, %.1f°)",
-          currentPose.getX(),
-          currentPose.getY(),
-          Math.toDegrees(currentPose.getHeading()));
+          currentPose.x(),
+          currentPose.y(),
+          Math.toDegrees(currentPose.heading()));
       telemetry.addData("Pos Error (in)", "%.2f", distError);
       telemetry.addData("Heading Error (deg)", "%.1f°", angleErrorDeg);
       telemetry.addData("Actual Distance to Goal", "%.2f in", actualDist);
       telemetry.update();
 
       if ((distError < 0.8 && angleErrorDeg < 1.5)
-          || (robot.follower.getVelocity().getMagnitude() < 0.2 && distError < 2.0)) {
+          || (robot.follower.velocity().toVector2D().magnitude() < 0.2 && distError < 2.0)) {
         break;
       }
     }
@@ -362,9 +362,8 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
     boolean dpadUpPrev = true;
     boolean dpadDownPrev = true;
 
-    // moveToWaypoint() left the follower in holdPoint mode, which ignores setTeleOpDrive() until
-    // manualDrive is switched on. Without this, the sticks below have no effect on the robot.
-    robot.follower.startTeleopDrive();
+    // moveToWaypoint() left the follower holding its waypoint; switch it to manual drive.
+    robot.follower.manual(DrivePowers.zero());
 
     while (opModeIsActive()) {
       for (LynxModule module : allHubs) {
@@ -461,11 +460,19 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
       double forward = -gamepad1.left_stick_y;
       double strafe = -gamepad1.left_stick_x;
 
-      Pose currentPose = robot.follower.getPose();
+      Pose currentPose = robot.follower.pose();
       double[] adjusted =
           robot.casablanca.adjustDriveInput(
-              currentPose, robot.follower.getVelocity(), 0.0, strafe, forward, rawTurn, rawTurn);
-      robot.follower.setTeleOpDrive(adjusted[1], adjusted[0], adjusted[2], true);
+              currentPose,
+              robot.follower.velocity().toVector2D(),
+              0.0,
+              strafe,
+              forward,
+              rawTurn,
+              rawTurn);
+      // Casablanca returns field-frame [y, x, turn]; rotate it into the robot frame.
+      robot.follower.manual(
+          ManualDrive.fieldCentric(adjusted[1], adjusted[0], adjusted[2], currentPose.heading()));
 
       // TeleOp & Calibration Shooting Controls. Alignment is still checked (turret aims/gates
       // normally), but useSolvedRpm is forced false: ShotController's own async solver reacts to
@@ -495,7 +502,7 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
 
       double gx = org.firstinspires.ftc.teamcode.records.Field.getBlueGoalX();
       double gy = org.firstinspires.ftc.teamcode.records.Field.getBlueGoalY();
-      double actualDist = Math.hypot(gy - currentPose.getY(), gx - currentPose.getX());
+      double actualDist = Math.hypot(gy - currentPose.y(), gx - currentPose.x());
 
       // Flywheel gate diagnostics
       double flywheelVelocity = Math.abs(robot.shotController.getFlywheelVelocity());
@@ -521,9 +528,9 @@ public class BallisticsCalibrationOpMode extends LinearOpMode {
       telemetry.addData(
           "Current Robot Pose",
           "(%.1f, %.1f, %.1f°)",
-          robot.follower.getPose().getX(),
-          robot.follower.getPose().getY(),
-          Math.toDegrees(robot.follower.getPose().getHeading()));
+          robot.follower.pose().x(),
+          robot.follower.pose().y(),
+          Math.toDegrees(robot.follower.pose().heading()));
       double rpmDelta = pinnedRpm - solverInitialRpm;
       String rpmDisplay =
           Math.abs(rpmDelta) < 1e-3

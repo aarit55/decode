@@ -8,7 +8,7 @@ import static org.firstinspires.ftc.teamcode.auto.PathUtil.pline;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.ivy.CommandBuilder;
-import com.pedropathing.paths.PathChain;
+import com.pedropathing.paths.Path;
 import org.firstinspires.ftc.teamcode.records.Alliance;
 import org.firstinspires.ftc.teamcode.robot.Shooter;
 import org.firstinspires.ftc.teamcode.robot.config.generated.config;
@@ -16,9 +16,9 @@ import org.firstinspires.ftc.teamcode.robot.config.generated.config;
 @Configurable
 public abstract class AllianceOppositeNew extends AllianceAutoBase<config.OppositeAuto> {
 
-  private PathChain scorePreload;
-  private PathChain grabPickup4, scorePickup4;
-  private PathChain gatePark;
+  private Path scorePreload;
+  private Path grabPickup4, scorePickup4;
+  private Path gatePark;
 
   protected AllianceOppositeNew(Alliance alliance) {
     super(alliance, config.OppositeAuto.class, "auto_poses.opposite");
@@ -67,7 +67,7 @@ public abstract class AllianceOppositeNew extends AllianceAutoBase<config.Opposi
             }));
   }
 
-  protected CommandBuilder intakeAndFollow(PathChain path) {
+  protected CommandBuilder intakeAndFollow(Path path) {
     return sequential(
         instant(
             () -> {
