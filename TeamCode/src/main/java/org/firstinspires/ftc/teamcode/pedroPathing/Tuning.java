@@ -39,8 +39,8 @@ import org.firstinspires.ftc.teamcode.utilities.OpModeUtil;
  * before the 3.0.1 migration.
  *
  * <p>The measurement tuners (velocity, zero-power deceleration, predictive braking, localization)
- * measure the same physical quantities as before and print the Pedro 3 field each result belongs
- * in ({@link Constants#foresightConfig} / {@link Constants#localizerConfig}). Pedro 2's manual PIDF
+ * measure the same physical quantities as before and print the Pedro 3 field each result belongs in
+ * ({@link Constants#foresightConfig} / {@link Constants#localizerConfig}). Pedro 2's manual PIDF
  * tuners (translational / heading / drive / centripetal) have no Pedro 3 equivalent, because
  * Foresight replaces those PIDFs; the "Hold Test" and the path tests exercise Foresight's
  * controllers instead. Swerve / analog tuners were dropped (this robot is mecanum).
@@ -126,7 +126,11 @@ public class Tuning extends SelectableOpMode {
 
   /** Robot-frame velocity from the localizer: x = forward, y = strafe (left positive). */
   static Vector2D robotVelocity() {
-    return follower.localizer.velocity().toVector2D().toBodyFrame(follower.localizer.pose().heading());
+    return follower
+        .localizer
+        .velocity()
+        .toVector2D()
+        .toBodyFrame(follower.localizer.pose().heading());
   }
 
   static double average(List<Double> values) {
@@ -204,7 +208,8 @@ class OffsetsTuner extends OpMode {
 
   @Override
   public void init_loop() {
-    telemetryM.debug("Prerequisite: set xPodOffset and yPodOffset to 0 in Constants.localizerConfig.");
+    telemetryM.debug(
+        "Prerequisite: set xPodOffset and yPodOffset to 0 in Constants.localizerConfig.");
     telemetryM.debug("Turn your robot 180 degrees. Your offsets in inches will be shown.");
     telemetryM.update(telemetry);
     drawCurrent();
@@ -379,8 +384,7 @@ abstract class VelocityTuner extends OpMode {
         end = true;
         stopRobot();
       } else {
-        mecanum.drive(
-            forwardAxis() ? new DrivePowers(1, 0, 0) : new DrivePowers(0, 1, 0), true);
+        mecanum.drive(forwardAxis() ? new DrivePowers(1, 0, 0) : new DrivePowers(0, 1, 0), true);
         Vector2D v = Tuning.robotVelocity();
         velocities.addLast(Math.abs(forwardAxis() ? v.x() : v.y()));
         while (velocities.size() > recordNumber()) {
@@ -390,8 +394,7 @@ abstract class VelocityTuner extends OpMode {
     } else {
       stopRobot();
       double avg = Tuning.average(new ArrayList<>(velocities));
-      String field =
-          forwardAxis() ? "maxAchievableForwardVelocity" : "maxAchievableStrafeVelocity";
+      String field = forwardAxis() ? "maxAchievableForwardVelocity" : "maxAchievableStrafeVelocity";
       telemetryM.debug((forwardAxis() ? "Forward" : "Lateral") + " velocity: " + avg);
       telemetryM.debug("Put it in Constants.java:  c." + field + ".set(" + avg + ");");
       telemetryM.debug("Press A to use it now (until the robot restarts).");
@@ -452,8 +455,8 @@ class LateralVelocityTuner extends VelocityTuner {
 
 /**
  * Speeds up to {@code VELOCITY} in/s, cuts power with the motors floating, and averages the
- * deceleration until the robot is nearly stopped. Pedro 2 called this "zero power acceleration"
- * (a negative number); Foresight's {@code naturalForwardDeceleration} / {@code
+ * deceleration until the robot is nearly stopped. Pedro 2 called this "zero power acceleration" (a
+ * negative number); Foresight's {@code naturalForwardDeceleration} / {@code
  * naturalStrafeDeceleration} take the positive magnitude.
  */
 abstract class ZeroPowerDecelTuner extends OpMode {
@@ -477,7 +480,8 @@ abstract class ZeroPowerDecelTuner extends OpMode {
   @Override
   public void init_loop() {
     String dir = forwardAxis() ? "forward" : "to the left";
-    telemetryM.debug("The robot will run " + dir + " until it reaches " + targetVelocity() + " in/s.");
+    telemetryM.debug(
+        "The robot will run " + dir + " until it reaches " + targetVelocity() + " in/s.");
     telemetryM.debug("Then it cuts power and rolls to a stop. Make sure you have enough room.");
     telemetryM.debug("Press B on gamepad 1 to stop.");
     telemetryM.update(telemetry);
@@ -510,8 +514,7 @@ abstract class ZeroPowerDecelTuner extends OpMode {
 
     if (!end) {
       if (!stopping) {
-        mecanum.drive(
-            forwardAxis() ? new DrivePowers(1, 0, 0) : new DrivePowers(0, 1, 0), false);
+        mecanum.drive(forwardAxis() ? new DrivePowers(1, 0, 0) : new DrivePowers(0, 1, 0), false);
         if (velocity > targetVelocity()) {
           previousVelocity = velocity;
           previousTimeNano = System.nanoTime();
@@ -598,11 +601,13 @@ class LateralZeroPowerDecelTuner extends ZeroPowerDecelTuner {
  * <p>Foresight uses the same model per axis (brake displacement = quadratic * v|v| + linear * v),
  * so the forward results go in entry (0,0) and the lateral results in entry (1,1) of {@code
  * foresightConfig.linearBrakeCoefficients} / {@code quadraticBrakeCoefficients}. The forward
- * results are also what {@link Constants#BRAKING_K_LINEAR} / {@link
- * Constants#BRAKING_K_QUADRATIC} (Casablanca's zone braking) use.
+ * results are also what {@link Constants#BRAKING_K_LINEAR} / {@link Constants#BRAKING_K_QUADRATIC}
+ * (Casablanca's zone braking) use.
  */
 abstract class BrakingTuner extends OpMode {
-  private static final double[] TEST_POWERS = {1, 1, 1, 0.9, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2};
+  private static final double[] TEST_POWERS = {
+    1, 1, 1, 0.9, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2
+  };
   private static final double BRAKING_POWER = -0.2;
   private static final int DRIVE_TIME_MS = 1000;
 
@@ -640,7 +645,10 @@ abstract class BrakingTuner extends OpMode {
 
   @Override
   public void init_loop() {
-    telemetryM.debug("The robot will move back and forth " + (forwardAxis() ? "(forward/back)" : "(left/right)") + ", slowing down each time.");
+    telemetryM.debug(
+        "The robot will move back and forth "
+            + (forwardAxis() ? "(forward/back)" : "(left/right)")
+            + ", slowing down each time.");
     telemetryM.debug("Leave at least 4-5 feet of room. Press B on gamepad 1 to stop.");
     telemetryM.update(telemetry);
     follower.update();
@@ -722,8 +730,18 @@ abstract class BrakingTuner extends OpMode {
         telemetryM.debug("kLinear: " + result[0]);
         telemetryM.debug("kQuadratic: " + result[1]);
         telemetryM.debug(
-            "Foresight: linearBrakeCoefficients(" + i + "," + i + ") = " + result[0]
-                + ", quadraticBrakeCoefficients(" + i + "," + i + ") = " + result[1]);
+            "Foresight: linearBrakeCoefficients("
+                + i
+                + ","
+                + i
+                + ") = "
+                + result[0]
+                + ", quadraticBrakeCoefficients("
+                + i
+                + ","
+                + i
+                + ") = "
+                + result[1]);
         if (forwardAxis()) {
           telemetryM.debug(
               "Casablanca: Constants.BRAKING_K_LINEAR / BRAKING_K_QUADRATIC use these same values.");
@@ -798,7 +816,8 @@ class HoldTest extends OpMode {
     telemetryM.addData("Error X", target.x() - p.x());
     telemetryM.addData("Error Y", target.y() - p.y());
     telemetryM.addData(
-        "Error Heading (deg)", Math.toDegrees(AngleUnit.normalizeRadians(target.heading() - p.heading())));
+        "Error Heading (deg)",
+        Math.toDegrees(AngleUnit.normalizeRadians(target.heading() - p.heading())));
     telemetryM.update(telemetry);
   }
 }
@@ -818,7 +837,8 @@ class Line extends OpMode {
 
   @Override
   public void init_loop() {
-    telemetryM.debug("The robot will drive forward and back " + DISTANCE + " inches, continuously.");
+    telemetryM.debug(
+        "The robot will drive forward and back " + DISTANCE + " inches, continuously.");
     telemetryM.update(telemetry);
     follower.update();
     drawCurrent();
@@ -860,7 +880,8 @@ class Triangle extends OpMode {
 
   @Override
   public void init_loop() {
-    telemetryM.debug("This will run in a roughly triangular shape, starting on the bottom-middle point.");
+    telemetryM.debug(
+        "This will run in a roughly triangular shape, starting on the bottom-middle point.");
     telemetryM.debug("Make sure you have room to the left, front, and right.");
     telemetryM.update(telemetry);
     follower.update();

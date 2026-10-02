@@ -62,6 +62,8 @@ android {
         
         if (plugins.hasPlugin("net.ltgt.errorprone")) {
             options.errorprone {
+                // Pedro's AutoTune procedures are copied verbatim from the Pedro Quickstart; don't lint them.
+                excludedPaths = ".*/pedroPathing/procedures/.*"
                 check("NullAway", CheckSeverity.ERROR)
                 option("NullAway:AnnotatedPackages", "org.firstinspires.ftc.teamcode")
                 
